@@ -5,6 +5,7 @@
 
 **Course: Integrative Programming and Technologies 1**
 
+
 The Inventory System was divided into 9 modules.
 
 The purpose of Transaction Module is to record inventory movement.
