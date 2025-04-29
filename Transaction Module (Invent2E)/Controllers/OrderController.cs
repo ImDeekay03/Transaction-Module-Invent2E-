@@ -1,6 +1,6 @@
 ﻿namespace Transaction_Module__Invent2E_.Controllers
 {
-    public class PurchaseOrderController
+    public class OrderController
     {
     }
 }
