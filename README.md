@@ -1,5 +1,5 @@
 # Transaction Module (Invent2E)
-**Invent2E Inventory System**
+**Invent2E Inventory System (This project is still in development)**
 
 **Group 2 SBIT-2E of Quezon City University**
 
