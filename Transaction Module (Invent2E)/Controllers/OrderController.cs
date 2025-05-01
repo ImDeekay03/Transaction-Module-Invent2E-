@@ -26,5 +26,22 @@ namespace Transaction_Module__Invent2E_.Controllers
             var order = _service.GetOrderById(id);
             return PartialView("_OrderDetailsModal", order);
         }
+
+        public IActionResult RecordPayment(int orderId)
+        {
+            var order = _service.GetOrderById(orderId);
+            var model = new Payment
+            {
+                orderId = order.OrderId,
+                AmountReceived = order.TotalAmount
+            };
+            return PartialView("_RecordPaymentModal", model);
+        }
+
+        public IActionResult ViewInvoice(int orderId)
+        {
+            var order = _service.GetOrderById(orderId);
+            return PartialView("_ViewInvoiceModal", order);
+        }
     }
 }
