@@ -1,7 +1,12 @@
+using Transaction_Module__Invent2E_.Services.Implementations;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+// Register your OrderService here
+builder.Services.AddSingleton<OrderService>();
 
 var app = builder.Build();
 
