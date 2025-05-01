@@ -11,5 +11,6 @@
 
         // Navigation properties
         public List<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
+        public string OrderStatus { get; internal set; }
     }
 }

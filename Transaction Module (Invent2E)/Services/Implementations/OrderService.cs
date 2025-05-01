@@ -1,31 +1,44 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
+using System.Collections.Generic;
 using Transaction_Module__Invent2E_.Models;
 
 namespace Transaction_Module__Invent2E_.Services.Implementations
 {
     public class OrderService
     {
-        private static List<Order> _orders = new List<Order>
-        {
-            new Order
-            {
-                OrderId = 1,
-                CustomerName = "Juan Dela Cruz",
-                OrderDate = DateTime.Today,
-                PaymentStatus = "Unpaid",
-                TotalAmount = 1500.00M,
-                OrderItems = new List<OrderItem>
-                {
-                    new OrderItem { ProductName = "Mango", Quantity = 5, Rate = 100, Tax = 10 },
-                    new OrderItem { ProductName = "Rice", Quantity = 2, Rate = 500, Tax = 50 }
-                }
-            }
-        };
+        private static List<Order> _orders = new List<Order>();
+        private static int _nextOrderId = 1;
 
-        public List<Order> GetAllOrders() => _orders;
+        public List<Order> GetAllOrders()
+        {
+            return _orders;
+        }
+
         public Order GetOrderById(int id)
         {
             return _orders.FirstOrDefault(o => o.OrderId == id);
+        }
+
+        public Order CreateOrder(Order order)
+        {
+            order.OrderId = _nextOrderId++;
+            order.OrderDate = DateTime.Now;
+            order.OrderStatus = "Pending";
+            order.PaymentStatus = "Unpaid";
+
+            _orders.Add(order);
+            return order;
+        }
+
+        public bool DeleteOrder(int id)
+        {
+            var order = _orders.FirstOrDefault(o => o.OrderId == id);
+            if (order == null)
+                return false;
+
+            _orders.Remove(order);
+            return true;
         }
     }
 }
