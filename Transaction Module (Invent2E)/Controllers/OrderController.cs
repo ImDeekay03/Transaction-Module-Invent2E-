@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Transaction_Module__Invent2E_.Controllers;
+using Transaction_Module__Invent2E_.Models;
 using Transaction_Module__Invent2E_.Services.Implementations;
 using Transaction_Module__Invent2E_.Services.Interfaces;
 
@@ -10,7 +11,7 @@ namespace Transaction_Module__Invent2E_.Controllers
     public class OrderController : Controller
     {
         private readonly OrderService _service;
-        public OrdersController(OrderService service)
+        public OrderController(OrderService service)
         {
             _service = service;
         }
@@ -32,7 +33,7 @@ namespace Transaction_Module__Invent2E_.Controllers
             var order = _service.GetOrderById(orderId);
             var model = new Payment
             {
-                orderId = order.OrderId,
+                OrderId = order.OrderId,
                 AmountReceived = order.TotalAmount
             };
             return PartialView("_RecordPaymentModal", model);
