@@ -2,29 +2,29 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Transaction_Module__Invent2E_.Controllers;
+using Transaction_Module__Invent2E_.Services.Implementations;
 using Transaction_Module__Invent2E_.Services.Interfaces;
 
 namespace Transaction_Module__Invent2E_.Controllers
 {
-    public class OrderController :Controller
+    public class OrderController : Controller
     {
-        private readonly IOrderService OrderService;
-        private readonly IInvoiceService InvoiceService;   // To fetch invoice details
-        private readonly IPaymentService PaymentService;   // To record payments
-        // Potentially other service dependencies
-
-        public OrderController(IOrderService orderService, IInvoiceService invoiceService, IPaymentService paymentService)
+        private readonly OrderService _service;
+        public OrdersController(OrderService service)
         {
-            OrderService = orderService;
-            InvoiceService = invoiceService;
-            PaymentService = paymentService;
+            _service = service;
         }
 
-        // GET: Orders
-        public async Task<IActionResult> Index()
+        public IActionResult Index()
         {
-            var orders = await OrderService.GetAllOrdersAsync();
+            var orders = _service.GetAllOrders();
             return View(orders);
+        }
+
+        public IActionResult GetOrderDetails(int id)
+        {
+            var order = _service.GetOrderById(id);
+            return PartialView("_OrderDetailsModal", order);
         }
     }
 }
