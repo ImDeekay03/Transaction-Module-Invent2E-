@@ -17,7 +17,7 @@
             font-family: 'Poppins', sans-serif;
         }
         .order-form-container {
-            max-width: 600px;
+            max-width: 800px;
             margin: 40px auto;
             background: #232c31;
             border-radius: 16px;
@@ -87,6 +87,18 @@
             border: 1.5px solid #00df72;
             color: #00df72;
         }
+        .validation-summary-errors {
+            color: #ff6b6b;
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background: rgba(255, 107, 107, 0.1);
+            border-radius: 6px;
+        }
+        .field-validation-error {
+            color: #ff6b6b;
+            font-size: 0.85rem;
+            margin-top: 0.25rem;
+        }
         @@media (max-width: 700px) {
             .order-form-container {
                 padding: 1rem;
@@ -96,119 +108,143 @@
             }
         }
     </style>
-</head>
-<body>
-    <div class="order-form-container">
-        <div class="order-form-title">Record Payment</div>
-        <form asp-action="RecordPayment" method="post" id="orderForm">
-            @Html.AntiForgeryToken()
-            @Html.ValidationSummary(true, "", new { @class = "text-danger" })
-            <div class="order-form-grid">
-                <div class="order-form-group full-width" style="display: flex; gap: 1.5rem; align-items: flex-end;">
-                    <div style="flex:1;">
-                        <label>Order ID</label>
-                        <input asp-for="OrderID" readonly />
-                    </div>
-                    <div style="flex:1;">
-                        <label>Order Date</label>
-                        <input asp-for="OrderDate" type="date" required />
-                    </div>
+}
+
+<div class="order-form-container">
+    <div class="order-form-title">Record Payment</div>
+    <form asp-action="RecordPayment" method="post" id="orderForm">
+        @Html.AntiForgeryToken()
+        <div asp-validation-summary="ModelOnly" class="validation-summary-errors"></div>
+        
+        <div class="order-form-grid">
+            <div class="order-form-group full-width" style="display: flex; gap: 1.5rem; align-items: flex-end;">
+                <div style="flex:1;">
+                    <label asp-for="OrderID">Order ID</label>
+                    <input asp-for="OrderID" readonly />
                 </div>
-                <div class="order-form-group full-width">
-                    <label>Customer Name</label>
-                    <input type="text" name="CustomerName" required />
-                </div>
-                <div class="order-form-group">
-                    <input type="hidden" asp-for="CustomerID" value="1" />
-                    <input type="hidden" asp-for="OrderSource" value="Website" />
-                    <input type="hidden" asp-for="Location" value="Manila" />
-                    <input type="hidden" asp-for="Status" value="New" />
-                    <input type="hidden" asp-for="ProgressPercentage" value="0" />
-                </div>
-                <div class="order-form-group full-width">
-                    <label>Add Product to Order</label>
-                    <div style="display: flex; gap: 1rem; align-items: flex-end;">
-                        <select id="productSelect" style="flex:2;">
-                            <option value="">Select a product...</option>
-                            <option value="Men Cotton Polo Shirt">Men Cotton Polo Shirt</option>
-                            <option value="Women Blouse">Women Blouse</option>
-                            <option value="Kids Shorts">Kids Shorts</option>
-                        </select>
-                        <input type="number" id="productQty" min="1" value="1" style="width:80px;flex:1;" />
-                        <button type="button" class="btn btn-primary" id="addProductBtn">Add</button>
-                    </div>
-                </div>
-                <div class="order-form-group full-width">
-                    <label>Products in Order</label>
-                    <table id="orderProductsTable" style="width:100%;margin-top:0.5rem;background:#232c31;color:#fff;border-radius:8px;overflow:hidden;">
-                        <thead>
-                            <tr>
-                                <th style="text-align:left;padding:0.5rem;">Product</th>
-                                <th style="text-align:right;padding:0.5rem;">Quantity</th>
-                                <th style="text-align:right;padding:0.5rem;">Unit Price</th>
-                                <th style="text-align:right;padding:0.5rem;">Total</th>
-                                <th style="text-align:center;padding:0.5rem;">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="orderProductsBody">
-                            <!-- Products will be added here -->
-                        </tbody>
-                    </table>
-                </div>
-                <div class="order-form-group">
-                    <label>House No.</label>
-                    <input type="text" name="HouseNo" required />
-                </div>
-                <div class="order-form-group">
-                    <label>Street Address</label>
-                    <input type="text" name="StreetAddress" required />
-                </div>
-                <div class="order-form-group">
-                    <label>Barangay</label>
-                    <input type="text" name="Barangay" required />
-                </div>
-                <div class="order-form-group">
-                    <label>Postal ID</label>
-                    <input type="text" name="PostalId" required />
-                </div>
-                <div class="order-form-group">
-                    <label>City</label>
-                    <input type="text" name="City" required />
-                </div>
-                <div class="order-form-group">
-                    <label asp-for="OrderTotal"></label>
-                    <input asp-for="OrderTotal" readonly />
-                </div>
-                <div class="order-form-group">
-                    <label asp-for="IsPaid"></label>
-                    <select asp-for="IsPaid" id="isPaidSelect">
-                        <option value="false">No</option>
-                        <option value="true">Yes</option>
-                    </select>
-                </div>
-                <div class="order-form-group" id="paymentMethodGroup" style="display: none;">
-                    <label asp-for="PaymentMethod"></label>
-                    <select asp-for="PaymentMethod" id="paymentMethodSelect">
-                        <option value="">Select...</option>
-                        <option value="Cash">Cash</option>
-                        <option value="GCash">GCash</option>
-                        <option value="Maya">Maya</option>
-                        <option value="Bank">Bank Transfer</option>
-                    </select>
-                </div>
-                <div class="order-form-group" id="referenceNumberGroup" style="display: none;">
-                    <label asp-for="ReferenceNumber">Reference Number</label>
-                    <input type="text" asp-for="ReferenceNumber" id="referenceNumber" />
-                </div>
-                <div class="order-form-actions">
-                    <button type="button" class="btn btn-outline" onclick="window.location.href='/Orders'">Cancel</button>
-                    <button type="submit" class="btn btn-primary" id="submitOrder">Record Payment</button>
+                <div style="flex:1;">
+                    <label asp-for="OrderDate">Order Date</label>
+                    <input asp-for="OrderDate" type="date" required />
+                    <span asp-validation-for="OrderDate" class="field-validation-error"></span>
                 </div>
             </div>
-            <!-- Hidden field for order items -->
-            <input type="hidden" id="orderItemsJson" name="OrderItemsJson" />
-        </form>
-    </div>
+
+            <div class="order-form-group full-width">
+                <label>Customer Name</label>
+                <input type="text" name="CustomerName" required />
+            </div>
+
+            <input type="hidden" asp-for="CustomerID" value="1" />
+            <input type="hidden" asp-for="OrderSource" value="Website" />
+            <input type="hidden" asp-for="Location" value="Manila" />
+            <input type="hidden" asp-for="Status" value="New" />
+            <input type="hidden" asp-for="ProgressPercentage" value="0" />
+
+            <div class="order-form-group full-width">
+                <label>Add Product to Order</label>
+                <div style="display: flex; gap: 1rem; align-items: flex-end;">
+                    <select id="productSelect" style="flex:2;">
+                        <option value="">Select a product...</option>
+                        <option value="Men Cotton Polo Shirt">Men Cotton Polo Shirt</option>
+                        <option value="Women Blouse">Women Blouse</option>
+                        <option value="Kids Shorts">Kids Shorts</option>
+                    </select>
+                    <input type="number" id="productQty" min="1" value="1" style="width:80px;flex:1;" />
+                    <button type="button" class="btn btn-primary" id="addProductBtn">Add</button>
+                </div>
+            </div>
+
+            <div class="order-form-group full-width">
+                <label>Products in Order</label>
+                <table id="orderProductsTable" style="width:100%;margin-top:0.5rem;background:#232c31;color:#fff;border-radius:8px;overflow:hidden;">
+                    <thead>
+                        <tr>
+                            <th style="text-align:left;padding:0.5rem;">Product</th>
+                            <th style="text-align:right;padding:0.5rem;">Quantity</th>
+                            <th style="text-align:right;padding:0.5rem;">Unit Price</th>
+                            <th style="text-align:right;padding:0.5rem;">Total</th>
+                            <th style="text-align:center;padding:0.5rem;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="orderProductsBody">
+                        <!-- Products will be added here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="order-form-group">
+                <label>House No.</label>
+                <input type="text" name="HouseNo" required />
+            </div>
+
+            <div class="order-form-group">
+                <label>Street Address</label>
+                <input type="text" name="StreetAddress" required />
+            </div>
+
+            <div class="order-form-group">
+                <label>Barangay</label>
+                <input type="text" name="Barangay" required />
+            </div>
+
+            <div class="order-form-group">
+                <label>Postal ID</label>
+                <input type="text" name="PostalId" required />
+            </div>
+
+            <div class="order-form-group">
+                <label>City</label>
+                <input type="text" name="City" required />
+            </div>
+
+            <div class="order-form-group">
+                <label asp-for="OrderTotal">Order Total</label>
+                <input asp-for="OrderTotal" readonly />
+                <span asp-validation-for="OrderTotal" class="field-validation-error"></span>
+            </div>
+
+            <div class="order-form-group">
+                <label asp-for="IsPaid">Is Paid</label>
+                <select asp-for="IsPaid" id="isPaidSelect">
+                    <option value="false">No</option>
+                    <option value="true">Yes</option>
+                </select>
+                <span asp-validation-for="IsPaid" class="field-validation-error"></span>
+            </div>
+
+            <div class="order-form-group" id="paymentMethodGroup" style="display: none;">
+                <label asp-for="PaymentMethod">Payment Method</label>
+                <select asp-for="PaymentMethod" id="paymentMethodSelect">
+                    <option value="">Select...</option>
+                    <option value="Cash">Cash</option>
+                    <option value="GCash">GCash</option>
+                    <option value="Maya">Maya</option>
+                    <option value="Bank">Bank Transfer</option>
+                </select>
+                <span asp-validation-for="PaymentMethod" class="field-validation-error"></span>
+            </div>
+
+            <div class="order-form-group" id="referenceNumberGroup" style="display: none;">
+                <label asp-for="ReferenceNumber">Reference Number</label>
+                <input type="text" asp-for="ReferenceNumber" id="referenceNumber" />
+                <span asp-validation-for="ReferenceNumber" class="field-validation-error"></span>
+            </div>
+
+            <div class="order-form-actions">
+                <button type="button" class="btn btn-outline" onclick="window.location.href='/Orders'">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="submitOrder">Record Payment</button>
+            </div>
+        </div>
+
+        <!-- Hidden field for order items -->
+        <input type="hidden" id="orderItemsJson" name="OrderItemsJson" />
+    </form>
+</div>
+
+@section Scripts {
+    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
     <script src="~/js/record-payment.js"></script>
+    }
 </body>
 </html>

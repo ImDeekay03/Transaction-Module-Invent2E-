@@ -5,8 +5,6 @@ using TransactionF.Models;
 using System.Threading.Tasks;
 using System.Linq;
 using Microsoft.Extensions.Logging;
-using System.Collections.Generic;
-using System.Text.Json;
 
 namespace TransactionF.Controllers
 {
@@ -140,16 +138,12 @@ namespace TransactionF.Controllers
                     return View(order);
                 }
 
-                // Get form data
+                // Combine address fields
                 var houseNo = Request.Form["HouseNo"].ToString();
                 var street = Request.Form["StreetAddress"].ToString();
                 var barangay = Request.Form["Barangay"].ToString();
                 var postal = Request.Form["PostalId"].ToString();
                 var city = Request.Form["City"].ToString();
-                var customerName = Request.Form["CustomerName"].ToString();
-                var orderItemsJson = Request.Form["OrderItemsJson"].ToString();
-
-                // Combine address fields
                 order.ShippingAddress = $"{houseNo} {street}, {barangay}, {city}, {postal}";
 
                 // Set default values if not provided
@@ -170,68 +164,12 @@ namespace TransactionF.Controllers
                     order.Location = "Manila";
                 }
 
-                // Handle payment information
-                if (order.IsPaid)
+                // Calculate OrderTotal from items
+                if (order.OrderItems != null)
                 {
-                    order.PaymentDate = DateTime.Now;
-                    
-                    // Validate payment method and reference number
-                    if (string.IsNullOrEmpty(order.PaymentMethod))
-                    {
-                        ModelState.AddModelError("PaymentMethod", "Payment method is required when order is marked as paid.");
-                        return View(order);
-                    }
-
-                    if (new[] { "GCash", "Maya", "Bank" }.Contains(order.PaymentMethod) && 
-                        string.IsNullOrEmpty(order.ReferenceNumber))
-                    {
-                        ModelState.AddModelError("ReferenceNumber", "Reference number is required for this payment method.");
-                        return View(order);
-                    }
+                    order.OrderItems = order.OrderItems.Where(i => !string.IsNullOrWhiteSpace(i.ProductName)).ToList();
+                    order.OrderTotal = order.OrderItems.Sum(i => i.Quantity * i.UnitPrice);
                 }
-                else
-                {
-                    // Clear payment-related fields if not paid
-                    order.PaymentMethod = string.Empty;
-                    order.ReferenceNumber = string.Empty;
-                    order.PaymentDate = null;
-                }
-
-                // Parse and set order items from JSON
-                if (!string.IsNullOrEmpty(orderItemsJson))
-                {
-                    try
-                    {
-                        var items = JsonSerializer.Deserialize<List<OrderItem>>(orderItemsJson);
-                        if (items != null)
-                        {
-                            order.OrderItems = items;
-                            order.OrderTotal = items.Sum(i => i.Quantity * i.UnitPrice);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex, "Error parsing order items JSON");
-                        ModelState.AddModelError("", "Error processing order items. Please try again.");
-                        return View(order);
-                    }
-                }
-
-                if (order.OrderItems == null || !order.OrderItems.Any())
-                {
-                    ModelState.AddModelError("", "At least one product must be added to the order.");
-                    return View(order);
-                }
-
-                // Add initial status history
-                order.StatusHistory = [
-                    new OrderStatusHistory
-                    {
-                        Status = order.Status,
-                        StatusDate = DateTime.Now,
-                        Notes = "Order created"
-                    }
-                ];
 
                 _logger.LogInformation("Attempting to save order: {@order}", order);
 

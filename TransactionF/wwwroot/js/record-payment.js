@@ -14,20 +14,30 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Product prices
     const productPrices = {
-        'Men Cotton Polo Shirt': 599.99,
-        'Women Blouse': 499.99,
-        'Kids Shorts': 299.99
+        'Men Cotton Polo Shirt': { price: 599.99, id: 'MCP001' },
+        'Women Blouse': { price: 499.99, id: 'WB001' },
+        'Kids Shorts': { price: 299.99, id: 'KS001' }
     };
+
+    // Create productPrice div if it doesn't exist
+    let productPriceDiv = document.getElementById('productPrice');
+    if (!productPriceDiv && productSelect) {
+        productPriceDiv = document.createElement('div');
+        productPriceDiv.id = 'productPrice';
+        productSelect.parentNode.insertBefore(productPriceDiv, productSelect.nextSibling);
+    }
 
     // Handle payment method visibility
     function togglePaymentFields() {
+        if (!isPaidSelect || !paymentMethodGroup) return;
+        
         const isPaid = isPaidSelect.value === 'true';
         paymentMethodGroup.style.display = isPaid ? 'block' : 'none';
         
         if (!isPaid) {
-            paymentMethodSelect.value = '';
-            referenceNumberGroup.style.display = 'none';
-            referenceNumberInput.value = '';
+            if (paymentMethodSelect) paymentMethodSelect.value = '';
+            if (referenceNumberGroup) referenceNumberGroup.style.display = 'none';
+            if (referenceNumberInput) referenceNumberInput.value = '';
         } else {
             toggleReferenceNumber();
         }
@@ -35,6 +45,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Handle reference number visibility
     function toggleReferenceNumber() {
+        if (!paymentMethodSelect || !referenceNumberGroup || !referenceNumberInput) return;
+        
         const selectedMethod = paymentMethodSelect.value;
         const showReferenceNumber = ['GCash', 'Maya', 'Bank'].includes(selectedMethod);
         referenceNumberGroup.style.display = showReferenceNumber ? 'block' : 'none';
@@ -54,24 +66,39 @@ document.addEventListener('DOMContentLoaded', function() {
         paymentMethodSelect.addEventListener('change', toggleReferenceNumber);
     }
 
+    // Handle product selection
+    if (productSelect) {
+        productSelect.addEventListener('change', function() {
+            const productName = this.value;
+            if (productName && productPrices[productName]) {
+                if (productQty) productQty.value = '1';
+            }
+        });
+    }
+
     // Add product to order
-    if (addProductBtn) {
+    if (addProductBtn && productSelect && productQty && orderProductsBody) {
         addProductBtn.addEventListener('click', function() {
             const productName = productSelect.value;
-            const quantity = parseInt(productQty.value);
+            const quantity = parseInt(productQty.value || 0);
 
             if (!productName) {
                 alert('Please select a product');
                 return;
             }
 
-            if (quantity < 1) {
+            if (isNaN(quantity) || quantity < 1) {
                 alert('Quantity must be at least 1');
                 return;
             }
 
-            const unitPrice = productPrices[productName];
-            const total = quantity * unitPrice;
+            const productInfo = productPrices[productName];
+            if (!productInfo) {
+                alert('Product information not found');
+                return;
+            }
+
+            const total = quantity * productInfo.price;
 
             // Check if product already exists
             const existingRow = Array.from(orderProductsBody.children).find(
@@ -85,15 +112,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 qtyCell.textContent = newQty;
                 
                 const totalCell = existingRow.children[3];
-                totalCell.textContent = (newQty * unitPrice).toFixed(2);
+                totalCell.textContent = `₱${(newQty * productInfo.price).toFixed(2)}`;
             } else {
                 // Add new row
                 const row = document.createElement('tr');
                 row.dataset.product = productName;
+                row.dataset.productId = productInfo.id;
                 row.innerHTML = `
                     <td style="padding:0.5rem;">${productName}</td>
                     <td style="text-align:right;padding:0.5rem;">${quantity}</td>
-                    <td style="text-align:right;padding:0.5rem;">₱${unitPrice.toFixed(2)}</td>
+                    <td style="text-align:right;padding:0.5rem;">₱${productInfo.price.toFixed(2)}</td>
                     <td style="text-align:right;padding:0.5rem;">₱${total.toFixed(2)}</td>
                     <td style="text-align:center;padding:0.5rem;">
                         <button type="button" class="btn btn-outline" onclick="removeProduct(this)" style="padding:0.25rem 0.5rem;">Remove</button>
@@ -105,22 +133,37 @@ document.addEventListener('DOMContentLoaded', function() {
             updateOrderTotal();
             productSelect.value = '';
             productQty.value = '1';
+            
+            // Clear the price display
+            if (productPriceDiv) {
+                productPriceDiv.textContent = '';
+            }
         });
     }
 
     // Remove product from order
     window.removeProduct = function(button) {
+        if (!button) return;
+        
         const row = button.closest('tr');
-        row.remove();
-        updateOrderTotal();
+        if (row) {
+            row.remove();
+            updateOrderTotal();
+        }
     };
 
     // Update order total
     function updateOrderTotal() {
+        if (!orderProductsBody || !orderTotalInput) return;
+        
         const total = Array.from(orderProductsBody.children).reduce((sum, row) => {
-            const totalCell = row.children[3];
-            return sum + parseFloat(totalCell.textContent.replace('₱', ''));
+            if (row.children && row.children[3]) {
+                const totalText = row.children[3].textContent || '₱0';
+                return sum + parseFloat(totalText.replace('₱', '') || 0);
+            }
+            return sum;
         }, 0);
+        
         orderTotalInput.value = total.toFixed(2);
     }
 
@@ -136,28 +179,33 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (!field.value.trim()) {
                     isValid = false;
                     field.classList.add('is-invalid');
-                    alert(`Please fill in ${field.previousElementSibling.textContent}`);
+                    const labelText = field.previousElementSibling ? 
+                        field.previousElementSibling.textContent : 
+                        field.getAttribute('name') || 'this field';
+                    alert(`Please fill in ${labelText}`);
                 } else {
                     field.classList.remove('is-invalid');
                 }
             });
 
             // Check if there are any products
-            if (orderProductsBody.children.length === 0) {
+            if (!orderProductsBody || orderProductsBody.children.length === 0) {
                 alert('Please add at least one product to the order');
                 isValid = false;
             }
 
             // Check payment method if order is paid
-            if (isPaidSelect.value === 'true') {
-                const paymentMethod = paymentMethodSelect.value;
-                if (!paymentMethod) {
+            if (isPaidSelect && isPaidSelect.value === 'true') {
+                if (paymentMethodSelect && !paymentMethodSelect.value) {
                     alert('Please select a payment method');
                     isValid = false;
                 }
 
                 // Check reference number for specific payment methods
-                if (['GCash', 'Maya', 'Bank'].includes(paymentMethod) && !referenceNumberInput.value.trim()) {
+                if (paymentMethodSelect && 
+                    ['GCash', 'Maya', 'Bank'].includes(paymentMethodSelect.value) && 
+                    referenceNumberInput && 
+                    !referenceNumberInput.value.trim()) {
                     alert('Please enter a reference number');
                     isValid = false;
                 }
@@ -167,22 +215,54 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            // Create order items array
-            const orderItems = Array.from(orderProductsBody.children).map(row => ({
-                ProductName: row.dataset.product,
-                Quantity: parseInt(row.children[1].textContent),
-                UnitPrice: parseFloat(row.children[2].textContent.replace('₱', ''))
-            }));
+            try {
+                // Create order items array
+                const orderItems = Array.from(orderProductsBody.children).map(row => ({
+                    ProductId: row.dataset.productId || '',
+                    ProductName: row.dataset.product || '',
+                    Quantity: parseInt(row.children[1].textContent || '0'),
+                    UnitPrice: parseFloat((row.children[2].textContent || '₱0').replace('₱', ''))
+                }));
 
-            // Add order items to form
-            const orderItemsInput = document.getElementById('orderItemsJson');
-            orderItemsInput.value = JSON.stringify(orderItems);
+                // Add order items to form
+                let orderItemsInput = document.getElementById('orderItemsJson');
+                if (!orderItemsInput) {
+                    // Create the field if it doesn't exist
+                    orderItemsInput = document.createElement('input');
+                    orderItemsInput.type = 'hidden';
+                    orderItemsInput.id = 'orderItemsJson';
+                    orderItemsInput.name = 'OrderItemsJson';
+                    form.appendChild(orderItemsInput);
+                }
+                orderItemsInput.value = JSON.stringify(orderItems);
 
-            // Submit the form
-            form.submit();
+                // Set payment date if order is paid
+                if (isPaidSelect && isPaidSelect.value === 'true') {
+                    const paymentDateInput = document.createElement('input');
+                    paymentDateInput.type = 'hidden';
+                    paymentDateInput.name = 'PaymentDate';
+                    paymentDateInput.value = new Date().toISOString();
+                    form.appendChild(paymentDateInput);
+                }
+
+                // Log the data before submission
+                console.log('Form data being submitted:', {
+                    orderItems: orderItems,
+                    isPaid: isPaidSelect ? isPaidSelect.value : 'unknown',
+                    paymentMethod: paymentMethodSelect ? paymentMethodSelect.value : 'unknown',
+                    referenceNumber: referenceNumberInput ? referenceNumberInput.value : 'unknown',
+                    total: orderTotalInput ? orderTotalInput.value : 'unknown'
+                });
+
+                // Submit the form
+                form.submit();
+            } catch (error) {
+                console.error('Error preparing form submission:', error);
+                alert('Error preparing order data: ' + error.message);
+            }
         });
     }
 
     // Initial check on page load
     togglePaymentFields();
-}); 
+});
