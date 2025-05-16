@@ -1,4 +1,5 @@
-﻿@model IEnumerable<TransactionF.Models.Order>
+﻿@using System.Linq
+@model IEnumerable<TransactionF.Models.Order>
 @{
     ViewData["Title"] = "Orders";
     Layout = "_Layout";
@@ -23,13 +24,14 @@
 
     <div class="filters">
         <div class="filter-section">
-            <div class="filter-title">Product Status</div>
+            <div class="filter-title">Order Status</div>
             <div class="filter-options">
-                <div class="filter-option">All <span class="badge">76</span></div>
-                <div class="filter-option active">Quote <span class="badge">32</span></div>
-                <div class="filter-option">Sample <span class="badge">10</span></div>
-                <div class="filter-option">Shipment <span class="badge">8</span></div>
-                <div class="filter-option">Fulfilled <span class="badge">26</span></div>
+                <div class="filter-option" data-status="all">All</div>
+                <div class="filter-option" data-status="New">New</div>
+                <div class="filter-option" data-status="Processing">Processing</div>
+                <div class="filter-option" data-status="Shipped">Shipped</div>
+                <div class="filter-option" data-status="Delivered">Delivered</div>
+                <div class="filter-option" data-status="Fulfilled">Fulfilled</div>
             </div>
         </div>
 
@@ -42,18 +44,18 @@
                 </svg>
             </div>
             <div class="dropdown-content">
-                <a href="#">Website</a>
-                <a href="#">Mobile App</a>
-                <a href="#">POS</a>
-                <a href="#">Phone</a>
+                <a href="#" data-source="Website">Website</a>
+                <a href="#" data-source="Mobile App">Mobile App</a>
+                <a href="#" data-source="POS">POS</a>
+                <a href="#" data-source="Phone">Phone</a>
             </div>
         </div>
 
         <div class="filter-section">
             <div class="filter-title">Order Date</div>
             <div class="date-range">
-                <input type="date" data-type="orderDateFrom" placeholder="From">
-                <input type="date" data-type="orderDateTo" placeholder="To">
+                <input type="date" id="orderDateFrom" placeholder="From">
+                <input type="date" id="orderDateTo" placeholder="To">
             </div>
         </div>
 
@@ -66,19 +68,11 @@
                 </svg>
             </div>
             <div class="dropdown-content">
-                <a href="#">Manila</a>
-                <a href="#">Quezon City</a>
-                <a href="#">Makati</a>
-                <a href="#">Pasig</a>
-                <a href="#">Taguig</a>
-            </div>
-        </div>
-
-        <div class="filter-section">
-            <div class="filter-title">Total Order Range</div>
-            <div class="range-inputs">
-                <input type="number" data-type="min" placeholder="Min">
-                <input type="number" data-type="max" placeholder="Max">
+                <a href="#" data-location="Manila">Manila</a>
+                <a href="#" data-location="Quezon City">Quezon City</a>
+                <a href="#" data-location="Makati">Makati</a>
+                <a href="#" data-location="Pasig">Pasig</a>
+                <a href="#" data-location="Taguig">Taguig</a>
             </div>
         </div>
 
@@ -95,13 +89,19 @@
         <h1 class="page-title">Orders</h1>
         <div class="actions">
             <div class="search-container">
-                <input type="text" class="search-input" placeholder="Search Product here">
+                <input type="text" id="searchInput" class="search-input" placeholder="Search orders...">
                 <div class="search-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                         <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z" />
                     </svg>
                 </div>
             </div>
+            <a href="/Orders/ArchiveHistory" class="archive-button">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M0 2a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1v7.5a2.5 2.5 0 0 1-2.5 2.5h-9A2.5 2.5 0 0 1 1 12.5V5a1 1 0 0 1-1-1V2zm2 3v7.5A1.5 1.5 0 0 0 3.5 14h9a1.5 1.5 0 0 0 1.5-1.5V5H2zm13-3H1v2h14V2zM5 7.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5z"/>
+                </svg>
+                View Archives
+            </a>
             <a href="/Orders/RecordPayment" class="add-order-button" id="addNewOrder">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                     <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z" />
@@ -112,158 +112,263 @@
     </div>
 
     <div class="order-list" id="orderList">
-        <!-- Order 1 -->
-        <div class="order-card" data-order-id="SO-854">
-            <div class="order-header">
-                <div class="order-description">
-                    <div>
-                        <div class="order-id">SO-854</div>
-                        <div>Men Cotton Polo Shirt / S x1</div>
+        @foreach (var order in Model.Where(o => !o.IsArchived))
+        {
+            <div class="order-card" data-order-id="@order.OrderID" onclick="showOrderDetails(@order.OrderID)">
+                <div class="order-header">
+                    <div class="order-description">
+                        <div>
+                            <div class="order-id">SO-@order.OrderID</div>
+                            <div>
+                                @string.Join(" / ", order.OrderItems.Select(oi => $"{oi.Product?.ProductName ?? "Unknown"} x{oi.Quantity}"))
+                            </div>
+                        </div>
+                    </div>
+                    <div class="order-actions">
+                        <div class="order-price">₱@order.OrderTotal.ToString("N2")</div>
+                        <div class="button-group">
+                            <button class="order-button @(order.IsPaid ? "primary" : "secondary")">
+                                @(order.IsPaid ? "Paid" : "Unpaid")
+                            </button>
+                            <button class="order-button" onclick="event.stopPropagation(); showInvoicePopup(@order.OrderID)">
+                                View Invoice
+                            </button>
+                            <button class="actions-button" onclick="event.stopPropagation(); showOrderActions(@order.OrderID)">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z" />
+                                </svg>
+                            </button>
+                        </div>
                     </div>
                 </div>
-                <div class="order-actions">
-                    <div class="order-price">₱150.00</div>
-                    <div class="button-group">
-                        <button class="order-button primary">paid</button>
-                        <button class="actions-button">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                                <path d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z" />
-                            </svg>
-                        </button>
+                <div class="order-details">
+                    <div class="location-info">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6z" />
+                        </svg>
+                        @order.ShippingAddress
+                    </div>
+                    <div class="tracking-info">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M.05 3.555A2 2 0 0 1 2 2h12a2 2 0 0 1 1.95 1.555L8 8.414.05 3.555zM0 4.697v7.104l5.803-3.558L0 4.697zM6.761 8.83l-6.57 4.027A2 2 0 0 0 2 14h12a2 2 0 0 0 1.808-1.144l-6.57-4.027L8 9.586l-1.239-.757zm3.436-.586L16 11.801V4.697l-5.803 3.546z" />
+                        </svg>
+                        @if (!string.IsNullOrEmpty(order.TrackingNumber))
+                        {
+                            <span>@order.TrackingProvider: @order.TrackingNumber</span>
+                        }
+                        else
+                        {
+                            <span>No tracking info</span>
+                        }
+                    </div>
+                    <div class="order-status">@order.Status</div>
+                    <div class="status-date">@order.OrderDate.ToString("MMM dd, yyyy")</div>
+                    <div class="progress-bar">
+                        <div class="progress" style="width: @order.ProgressPercentage%"></div>
+                    </div>
+                    <div class="progress-steps">
+                        <div class="step-line"></div>
+                        <div class="step @(order.ProgressPercentage >= 25 ? "completed" : "")"></div>
+                        <div class="step @(order.ProgressPercentage >= 50 ? "completed" : "")"></div>
+                        <div class="step @(order.ProgressPercentage >= 75 ? "completed" : "")"></div>
+                        <div class="step @(order.ProgressPercentage >= 100 ? "completed" : "")"></div>
                     </div>
                 </div>
             </div>
-            <div class="order-details">
-                <div class="location-info">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16">
-                        <path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6z" />
-                    </svg>
-                    21 Street st., North Fairview Garden Quezon City
-                </div>
-                <div class="tracking-info">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16">
-                        <path d="M.05 3.555A2 2 0 0 1 2 2h12a2 2 0 0 1 1.95 1.555L8 8.414.05 3.555zM0 4.697v7.104l5.803-3.558L0 4.697zM6.761 8.83l-6.57 4.027A2 2 0 0 0 2 14h12a2 2 0 0 0 1.808-1.144l-6.57-4.027L8 9.586l-1.239-.757zm3.436-.586L16 11.801V4.697l-5.803 3.546z" />
-                    </svg>
-                    Last Tracking
-                    <span>JNT</span>
-                </div>
-                <div class="order-status">New Quote</div>
-                <div class="status-date">April 20, 2023</div>
-                <div class="progress-bar">
-                    <div class="progress" style="width: 25%"></div>
-                </div>
-                <div class="progress-steps">
-                    <div class="step-line"></div>
-                    <div class="step completed"></div>
-                    <div class="step active"></div>
-                    <div class="step"></div>
-                    <div class="step"></div>
-                </div>
-            </div>
-        </div>
+        }
+    </div>
+</div>
 
-        <!-- Order 2 -->
-        <div class="order-card" data-order-id="SO-853">
-            <div class="order-header">
-                <div class="order-description">
-                    <div>
-                        <div class="order-id">SO-853</div>
-                        <div>CURRYYYYY / S x1</div>
-                    </div>
-                </div>
-                <div class="order-actions">
-                    <div class="order-price">₱250.00</div>
-                    <div class="button-group">
-                        <button class="order-button secondary">Unpaid</button>
-                        <button class="actions-button">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                                <path d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z" />
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-            </div>
-            <div class="order-details">
-                <div class="location-info">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16">
-                        <path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6z" />
-                    </svg>
-                    21 Street st., North Fairview Garden Quezon City
-                </div>
-                <div class="tracking-info">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16">
-                        <path d="M.05 3.555A2 2 0 0 1 2 2h12a2 2 0 0 1 1.95 1.555L8 8.414.05 3.555zM0 4.697v7.104l5.803-3.558L0 4.697zM6.761 8.83l-6.57 4.027A2 2 0 0 0 2 14h12a2 2 0 0 0 1.808-1.144l-6.57-4.027L8 9.586l-1.239-.757zm3.436-.586L16 11.801V4.697l-5.803 3.546z" />
-                    </svg>
-                    Last Tracking
-                    <span>JNT</span>
-                </div>
-                <div class="order-status">Order is on shipping</div>
-                <div class="status-date">April 20, 2023</div>
-                <div class="progress-bar">
-                    <div class="progress" style="width: 75%"></div>
-                </div>
-                <div class="progress-steps">
-                    <div class="step-line"></div>
-                    <div class="step completed"></div>
-                    <div class="step completed"></div>
-                    <div class="step completed"></div>
-                    <div class="step"></div>
-                </div>
-            </div>
+<!-- Order Details Modal -->
+<div class="modal" id="orderDetailsModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Order Details</h2>
+            <button class="close-btn" onclick="closeOrderDetails()">&times;</button>
         </div>
+        <div class="modal-body">
+            <form id="orderDetailsForm">
+                <input type="hidden" id="orderId" name="orderId" />
+                
+                <div class="form-group">
+                    <label>Order Status</label>
+                    <select id="orderStatus" name="status" class="form-control">
+                        <option value="New">New</option>
+                        <option value="Processing">Processing</option>
+                        <option value="Shipped">Shipped</option>
+                        <option value="Delivered">Delivered</option>
+                        <option value="Fulfilled">Fulfilled</option>
+                    </select>
+                </div>
 
-        <!-- Order 3 -->
-        <div class="order-card" data-order-id="SO-852">
-            <div class="order-header">
-                <div class="order-description">
-                    <div>
-                        <div class="order-id">SO-852</div>
-                        <div>LEBRON JAMES / S x1</div>
-                    </div>
+                <div class="form-group">
+                    <label>Tracking Provider</label>
+                    <input type="text" id="trackingProvider" name="trackingProvider" class="form-control" />
                 </div>
-                <div class="order-actions">
-                    <div class="order-price">₱150.00</div>
-                    <div class="button-group">
-                        <button class="order-button primary">Paid</button>
-                        <button class="actions-button">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                                <path d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z" />
-                            </svg>
-                        </button>
-                    </div>
+
+                <div class="form-group">
+                    <label>Tracking Number</label>
+                    <input type="text" id="trackingNumber" name="trackingNumber" class="form-control" />
                 </div>
-            </div>
-            <div class="order-details">
-                <div class="location-info">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16">
-                        <path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6z" />
-                    </svg>
-                    21 Street st., North Fairview Garden Quezon City
+
+                <div class="form-group">
+                    <label>Progress Percentage</label>
+                    <input type="number" id="progressPercentage" name="progressPercentage" class="form-control" min="0" max="100" />
                 </div>
-                <div class="tracking-info">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16">
-                        <path d="M.05 3.555A2 2 0 0 1 2 2h12a2 2 0 0 1 1.95 1.555L8 8.414.05 3.555zM0 4.697v7.104l5.803-3.558L0 4.697zM6.761 8.83l-6.57 4.027A2 2 0 0 0 2 14h12a2 2 0 0 0 1.808-1.144l-6.57-4.027L8 9.586l-1.239-.757zm3.436-.586L16 11.801V4.697l-5.803 3.546z" />
-                    </svg>
-                    Last Tracking
-                    <span>JNT</span>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="archiveOrder()">Archive Order</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
                 </div>
-                <div class="order-status">Order is being packed</div>
-                <div class="status-date">April 20, 2023</div>
-                <div class="progress-bar">
-                    <div class="progress" style="width: 50%"></div>
-                </div>
-                <div class="progress-steps">
-                    <div class="step-line"></div>
-                    <div class="step completed"></div>
-                    <div class="step completed"></div>
-                    <div class="step active"></div>
-                    <div class="step"></div>
-                </div>
-            </div>
+            </form>
         </div>
     </div>
 </div>
 
+@await Html.PartialAsync("_InvoicePopup")
+
 @section Scripts {
     <script src="/js/site.js"></script>
+    <script>
+        function showOrderDetails(orderId) {
+            fetch(`/Orders/GetOrderDetails/${orderId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const order = data.order;
+                        document.getElementById('orderId').value = order.orderID;
+                        document.getElementById('orderStatus').value = order.status;
+                        document.getElementById('trackingProvider').value = order.trackingProvider || '';
+                        document.getElementById('trackingNumber').value = order.trackingNumber || '';
+                        document.getElementById('progressPercentage').value = order.progressPercentage;
+                        
+                        document.getElementById('orderDetailsModal').style.display = 'flex';
+                    } else {
+                        alert('Error loading order details');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error loading order details');
+                });
+        }
+
+        function closeOrderDetails() {
+            document.getElementById('orderDetailsModal').style.display = 'none';
+        }
+
+        function archiveOrder() {
+            const orderId = document.getElementById('orderId').value;
+            if (confirm('Are you sure you want to archive this order?')) {
+                fetch(`/Orders/ArchiveOrder/${orderId}`, { method: 'POST' })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            location.reload();
+                        } else {
+                            alert('Error archiving order');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Error archiving order');
+                    });
+            }
+        }
+
+        document.getElementById('orderDetailsForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const orderId = document.getElementById('orderId').value;
+            const formData = new FormData(this);
+            
+            fetch(`/Orders/UpdateOrder/${orderId}`, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Error updating order');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error updating order');
+            });
+        });
+
+        // Filter functionality
+        document.querySelectorAll('.filter-option').forEach(option => {
+            option.addEventListener('click', function() {
+                document.querySelectorAll('.filter-option').forEach(opt => opt.classList.remove('active'));
+                this.classList.add('active');
+                filterOrders();
+            });
+        });
+
+        document.getElementById('searchInput').addEventListener('input', filterOrders);
+
+        function filterOrders() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const status = document.querySelector('.filter-option.active')?.dataset.status;
+            
+            document.querySelectorAll('.order-card').forEach(card => {
+                const orderId = card.querySelector('.order-id').textContent.toLowerCase();
+                const orderStatus = card.querySelector('.order-status').textContent;
+                const isVisible = 
+                    (status === 'all' || status === orderStatus) &&
+                    (orderId.includes(searchTerm));
+                
+                card.style.display = isVisible ? 'block' : 'none';
+            });
+        }
+    </script>
 }
+
+<style>
+    /* Add these styles to match the existing design */
+    .archive-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        background: #232c31;
+        color: #b0b8bb;
+        border: 1px solid #2e414d;
+        border-radius: 6px;
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+
+    .archive-button:hover {
+        background: #2e414d;
+        color: #fff;
+        transform: translateY(-1px);
+    }
+
+    .archive-button svg {
+        width: 16px;
+        height: 16px;
+    }
+
+    .actions {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+    }
+
+    @@media (max-width: 768px) {
+        .actions {
+            flex-direction: column;
+            width: 100%;
+        }
+
+        .archive-button {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>

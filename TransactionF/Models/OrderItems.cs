@@ -12,49 +12,47 @@ namespace TransactionF.Models
     public class OrderItem
     {
         [Key]
-        public int Id { get; set; }
+        public int OrderItemID { get; set; }
 
         [Required]
-        [StringLength(50)]
-        public string ProductId { get; set; }
+        public int OrderID { get; set; }
+
+        [Required]
+        public int ProductID { get; set; }
 
         [Required]
         [StringLength(100)]
         public string ProductName { get; set; }
 
         [Required]
-        [Range(1, int.MaxValue)]
         public int Quantity { get; set; }
 
         [Required]
         [Column(TypeName = "decimal(18,2)")]
-        [Range(0.01, double.MaxValue)]
         public decimal UnitPrice { get; set; }
 
-        [NotMapped]
-        public decimal Total => Quantity * UnitPrice;
-
-        // Navigation property
         [Required]
-        public int OrderId { get; set; }
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal TotalPrice { get; set; }
 
-        [ForeignKey("OrderId")]
-        public Order Order { get; set; }
+        // Navigation properties
+        public virtual Order? Order { get; set; }
+        public virtual Product? Product { get; set; }
 
         public OrderItem()
         {
-            ProductId = string.Empty;
-            ProductName = string.Empty;
             Quantity = 1;
             UnitPrice = 0;
+            ProductName = string.Empty;
         }
 
-        public OrderItem(string productId, string productName, int quantity, decimal unitPrice)
+        public OrderItem(int orderID, int productID, int quantity, decimal unitPrice)
         {
-            ProductId = productId;
-            ProductName = productName;
+            OrderID = orderID;
+            ProductID = productID;
             Quantity = quantity;
             UnitPrice = unitPrice;
+            ProductName = string.Empty;
         }
     }
 }

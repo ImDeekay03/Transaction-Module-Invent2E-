@@ -1,7 +1,6 @@
 ﻿@model TransactionF.Models.Order
 @{
     ViewData["Title"] = "Record Payment";
-    Layout = null;
 }
 
 <!DOCTYPE html>
@@ -195,7 +194,7 @@
 <body>
     <div class="order-form-container">
         <div class="order-form-title">Record Payment</div>
-        <form asp-action="RecordPayment" method="post" id="orderForm">
+        <form asp-action="RecordPayment" method="post" id="paymentForm">
             @Html.AntiForgeryToken()
             <div asp-validation-summary="ModelOnly" class="validation-summary-errors"></div>
             
@@ -228,9 +227,21 @@
                     <div style="display: flex; gap: 1rem; align-items: flex-end;">
                         <select id="productSelect" style="flex:2;">
                             <option value="">Select a product...</option>
-                            <option value="Men Cotton Polo Shirt">Men Cotton Polo Shirt</option>
-                            <option value="Women Blouse">Women Blouse</option>
-                            <option value="Kids Shorts">Kids Shorts</option>
+                            @if (ViewBag.Products != null)
+                            {
+                                @foreach (var product in ViewBag.Products)
+                                {
+                                    <option value="@product.ProductID" 
+                                            data-price="@product.Price"
+                                            data-name="@product.ProductName">
+                                        @product.ProductName - ₱@product.Price.ToString("N2")
+                                    </option>
+                                }
+                            }
+                            else
+                            {
+                                <option value="" disabled>No products available</option>
+                            }
                         </select>
                         <input type="number" id="productQty" min="1" value="1" style="width:80px;flex:1;" />
                         <button type="button" class="btn btn-primary" id="addProductBtn">Add</button>
@@ -250,8 +261,15 @@
                             </tr>
                         </thead>
                         <tbody id="orderProductsBody">
-                            <!-- Products will be added here -->
+                            <!-- Products will be added here dynamically -->
                         </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="3" style="text-align:right;"><strong>Order Total:</strong></td>
+                                <td style="text-align:right;"><strong id="orderTotal">₱0.00</strong></td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
                     </table>
                 </div>
 
@@ -325,5 +343,8 @@
     </div>
 
     <script src="~/js/record-payment.js"></script>
+    @section Scripts {
+        @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    }
 </body>
 </html>

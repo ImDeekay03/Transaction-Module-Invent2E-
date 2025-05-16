@@ -1,0 +1,271 @@
+@model IEnumerable<TransactionF.Models.ArchiveHistory>
+@{
+    ViewData["Title"] = "Archive History";
+    Layout = "_Layout";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/site.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+}
+
+<div class="archive-history-container">
+    <div class="page-header">
+        <h1>Archive History</h1>
+        <a href="/Orders" class="btn btn-outline">
+            <i class="fas fa-arrow-left"></i> Back to Orders
+        </a>
+    </div>
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger" role="alert">
+            <i class="fas fa-exclamation-circle"></i>
+            @TempData["ErrorMessage"]
+        </div>
+    }
+
+    <div class="filters">
+        <form method="get" class="filter-form">
+            <div class="filter-grid">
+                <div class="filter-group">
+                    <label>Search</label>
+                    <input type="text" name="searchString" value="@ViewBag.CurrentSearch" 
+                           placeholder="Search by ID or reason..." />
+                </div>
+
+                <div class="filter-group">
+                    <label>Archived By</label>
+                    <select name="archivedBy">
+                        <option value="">All Users</option>
+                        @foreach (var user in ViewBag.ArchivedByList)
+                        {
+                            <option value="@user" selected="@(user == ViewBag.CurrentArchivedBy)">
+                                @user
+                            </option>
+                        }
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label>Archive Date Range</label>
+                    <div class="date-range">
+                        <input type="date" name="archiveDateFrom" value="@ViewBag.CurrentDateFrom" />
+                        <input type="date" name="archiveDateTo" value="@ViewBag.CurrentDateTo" />
+                    </div>
+                </div>
+
+                <div class="filter-group">
+                    <label>Previous Status</label>
+                    <select name="previousStatus">
+                        <option value="">All Statuses</option>
+                        @foreach (var status in ViewBag.Statuses)
+                        {
+                            <option value="@status" selected="@(status == ViewBag.CurrentStatus)">
+                                @status
+                            </option>
+                        }
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label>Previous Location</label>
+                    <select name="previousLocation">
+                        <option value="">All Locations</option>
+                        @foreach (var location in ViewBag.Locations)
+                        {
+                            <option value="@location" selected="@(location == ViewBag.CurrentLocation)">
+                                @location
+                            </option>
+                        }
+                    </select>
+                </div>
+
+                <div class="filter-actions">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search"></i> Apply Filters
+                    </button>
+                    <a href="/Orders/ArchiveHistory" class="btn btn-outline">
+                        <i class="fas fa-times"></i> Clear Filters
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="archive-history-list">
+        @if (!Model.Any())
+        {
+            <div class="no-results">
+                <i class="fas fa-archive"></i>
+                <p>No archive history found</p>
+            </div>
+        }
+        else
+        {
+            <table class="archive-table">
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Archived By</th>
+                        <th>Archive Date</th>
+                        <th>Previous Status</th>
+                        <th>Previous Location</th>
+                        <th>Archive Reason</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var history in Model)
+                    {
+                        <tr>
+                            <td>
+                                <a href="/Orders/Invoice/@history.OrderID" class="order-link">
+                                    SO-@history.OrderID
+                                </a>
+                            </td>
+                            <td>@history.ArchivedBy</td>
+                            <td>@history.ArchiveDate.ToString("MMM dd, yyyy HH:mm")</td>
+                            <td>
+                                <span class="status-badge @history.PreviousStatus?.ToLower()">
+                                    @history.PreviousStatus
+                                </span>
+                            </td>
+                            <td>@history.PreviousLocation</td>
+                            <td>@history.ArchiveReason</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+</div>
+
+<style>
+    .archive-history-container {
+        padding: 2rem;
+    }
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+
+    .filter-form {
+        background: #232c31;
+        padding: 1.5rem;
+        border-radius: 8px;
+        margin-bottom: 2rem;
+    }
+
+    .filter-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .filter-group label {
+        color: #b0b8bb;
+        font-size: 0.9rem;
+    }
+
+    .filter-group input,
+    .filter-group select {
+        padding: 0.5rem;
+        border: 1px solid #2e414d;
+        border-radius: 4px;
+        background: #181f22;
+        color: #fff;
+    }
+
+    .date-range {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .filter-actions {
+        grid-column: 1 / -1;
+        display: flex;
+        gap: 1rem;
+        justify-content: flex-end;
+        margin-top: 1rem;
+    }
+
+    .archive-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: #232c31;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .archive-table th,
+    .archive-table td {
+        padding: 1rem;
+        text-align: left;
+        border-bottom: 1px solid #2e414d;
+    }
+
+    .archive-table th {
+        background: #2e414d;
+        font-weight: 600;
+    }
+
+    .status-badge {
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+
+    .status-badge.new { background: #00df72; color: #181f22; }
+    .status-badge.processing { background: #ffd700; color: #181f22; }
+    .status-badge.shipped { background: #1e90ff; color: #fff; }
+    .status-badge.delivered { background: #32cd32; color: #fff; }
+    .status-badge.fulfilled { background: #9370db; color: #fff; }
+    .status-badge.cancelled { background: #ff6b6b; color: #fff; }
+
+    .order-link {
+        color: #00df72;
+        text-decoration: none;
+    }
+
+    .order-link:hover {
+        text-decoration: underline;
+    }
+
+    .no-results {
+        text-align: center;
+        padding: 3rem;
+        background: #232c31;
+        border-radius: 8px;
+        color: #b0b8bb;
+    }
+
+    .no-results i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+
+    @@media (max-width: 768px) {
+        .archive-history-container {
+            padding: 1rem;
+        }
+
+        .filter-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .archive-table {
+            display: block;
+            overflow-x: auto;
+        }
+    }
+</style> 
