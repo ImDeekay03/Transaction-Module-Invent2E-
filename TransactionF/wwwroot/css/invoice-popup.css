@@ -1,0 +1,165 @@
+.invoice-popup {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.invoice-card {
+    background: #232c31;
+    border-radius: 16px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.2);
+    width: 100%;
+    max-width: 800px;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 2rem;
+}
+
+.invoice-body {
+    color: #fff;
+}
+
+.company-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.company-logo {
+    width: 48px;
+    height: 48px;
+}
+
+.company-name {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #00df72;
+}
+
+.invoice-details {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.invoice-detail-column {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.detail-label {
+    color: #b0b8bb;
+    font-size: 0.9rem;
+}
+
+.detail-value {
+    font-weight: 600;
+}
+
+.order-summary {
+    margin-top: 2rem;
+}
+
+.order-summary h3 {
+    color: #fff;
+    margin-bottom: 1rem;
+}
+
+.invoice-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+}
+
+.invoice-table th,
+.invoice-table td {
+    padding: 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid #2e414d;
+}
+
+.invoice-table th {
+    color: #b0b8bb;
+    font-weight: 600;
+}
+
+.subtotal-row {
+    border-top: 1px solid #2e414d;
+}
+
+.total-row {
+    border-top: 2px solid #2e414d;
+    font-weight: bold;
+}
+
+.subtotal {
+    text-align: right;
+    padding-right: 1rem;
+}
+
+.actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+    justify-content: flex-end;
+}
+
+.btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: 6px;
+    border: none;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-primary {
+    background: #00df72;
+    color: #181f22;
+}
+
+.btn-primary:hover {
+    background: #00c766;
+    transform: translateY(-1px);
+}
+
+.btn-outline {
+    background: transparent;
+    border: 1.5px solid #00df72;
+    color: #00df72;
+}
+
+.btn-outline:hover {
+    background: rgba(0, 223, 114, 0.1);
+    transform: translateY(-1px);
+}
+
+@media (max-width: 768px) {
+    .invoice-card {
+        padding: 1rem;
+    }
+
+    .invoice-details {
+        grid-template-columns: 1fr;
+    }
+
+    .actions {
+        flex-direction: column;
+    }
+
+    .btn {
+        width: 100%;
+    }
+} 

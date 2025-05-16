@@ -302,7 +302,7 @@ namespace TransactionF.Controllers
             {
                 var order = await _context.Orders
                     .Include(o => o.OrderItems)
-                        .ThenInclude(oi => oi.Product)
+                    .ThenInclude(oi => oi.Product)
                     .FirstOrDefaultAsync(o => o.OrderID == id);
 
                 if (order == null)
@@ -310,48 +310,29 @@ namespace TransactionF.Controllers
                     return Json(new { success = false, message = "Order not found" });
                 }
 
-                // Create invoice if it doesn't exist
-                var invoice = await _context.Invoices
-                    .Include(i => i.Items)
-                    .FirstOrDefaultAsync(i => i.OrderID == id);
-
-                if (invoice == null)
+                var invoice = new
                 {
-                    invoice = new Invoice
+                    invoiceNumber = $"INV-{order.OrderID:D6}",
+                    invoiceDate = order.OrderDate,
+                    paymentMethod = order.PaymentMethod,
+                    shippingAddress = order.ShippingAddress,
+                    status = order.Status,
+                    items = order.OrderItems.Select(oi => new
                     {
-                        OrderID = order.OrderID,
-                        PaymentMethod = order.PaymentMethod,
-                        ShippingAddress = order.ShippingAddress,
-                        Status = "Paid",
-                        Subtotal = order.OrderTotal,
-                        TotalAmount = order.OrderTotal,
-                        PaymentAmount = order.PaymentAmount,
-                        PaymentDate = DateTime.Now,
-                        ReferenceNumber = order.ReferenceNumber
-                    };
+                        productName = oi.Product.ProductName,
+                        quantity = oi.Quantity,
+                        unitPrice = oi.UnitPrice,
+                        totalPrice = oi.TotalPrice
+                    }),
+                    subtotal = order.OrderItems.Sum(oi => oi.TotalPrice),
+                    totalAmount = order.OrderItems.Sum(oi => oi.TotalPrice)
+                };
 
-                    // Create invoice items
-                    foreach (var item in order.OrderItems)
-                    {
-                        invoice.Items.Add(new InvoiceItem
-                        {
-                            ProductID = item.ProductID,
-                            ProductName = item.Product?.ProductName ?? "Unknown Product",
-                            Quantity = item.Quantity,
-                            UnitPrice = item.UnitPrice,
-                            TotalPrice = item.Quantity * item.UnitPrice
-                        });
-                    }
-
-                    _context.Invoices.Add(invoice);
-                    await _context.SaveChangesAsync();
-                }
-
-                return Json(new { success = true, invoice = invoice });
+                return Json(new { success = true, invoice });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error retrieving invoice for order {OrderId}", id);
+                _logger.LogError(ex, "Error getting invoice for order {OrderId}", id);
                 return Json(new { success = false, message = "Error retrieving invoice" });
             }
         }

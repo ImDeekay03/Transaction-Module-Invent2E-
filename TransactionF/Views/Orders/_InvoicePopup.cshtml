@@ -1,4 +1,5 @@
 @* No model required *@
+<link rel="stylesheet" href="~/css/invoice-popup.css" />
 
 <div class="invoice-popup" id="invoicePopup" style="display: none;">
     <div class="invoice-card">
@@ -18,7 +19,7 @@
                     <div class="detail-value" id="popupInvoiceNumber"></div>
                 </div>
                 <div class="invoice-detail-column">
-                    <div class="detail-label">Order Date</div>
+                    <div class="detail-label">Invoice Date</div>
                     <div class="detail-value" id="popupInvoiceDate"></div>
                 </div>
                 <div class="invoice-detail-column">
@@ -79,7 +80,11 @@
     }
 
     function printInvoice() {
+        const popup = document.getElementById('invoicePopup');
+        const originalDisplay = popup.style.display;
+        popup.style.display = 'block';
         window.print();
+        popup.style.display = originalDisplay;
     }
 
     function showInvoicePopup(orderId) {
