@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.35919.96
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TransactionF", "TransactionF\TransactionF.csproj", "{4DE4FB8E-A022-4B0F-A733-5ED1E923DCAA}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4DE4FB8E-A022-4B0F-A733-5ED1E923DCAA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4DE4FB8E-A022-4B0F-A733-5ED1E923DCAA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4DE4FB8E-A022-4B0F-A733-5ED1E923DCAA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4DE4FB8E-A022-4B0F-A733-5ED1E923DCAA}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {FFB49867-8FF5-4833-BB13-1952273A4DF4}
+	EndGlobalSection
+EndGlobal
