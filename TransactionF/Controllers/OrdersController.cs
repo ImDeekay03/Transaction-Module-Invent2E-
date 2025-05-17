@@ -543,5 +543,114 @@ namespace TransactionF.Controllers
                 return View(new List<ArchiveHistory>());
             }
         }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RestoreOrder(int id)
+        {
+            try
+            {
+                // Find the order and related archive history
+                var order = await _context.Orders.FindAsync(id);
+                var archiveHistory = await _context.ArchiveHistories
+                    .FirstOrDefaultAsync(h => h.OrderID == id);
+
+                if (order == null)
+                {
+                    return Json(new { success = false, message = "Order not found" });
+                }
+
+                // Restore the order
+                order.IsArchived = false;
+                order.ArchivedDate = null;
+                order.ArchiveReason = null;
+
+                // Remove the archive history record
+                if (archiveHistory != null)
+                {
+                    _context.ArchiveHistories.Remove(archiveHistory);
+                }
+
+                await _context.SaveChangesAsync();
+                return Json(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error restoring order {OrderId}: {Message}", id, ex.Message);
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpDelete]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteOrder(int id)
+        {
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                _logger.LogInformation("Starting deletion of order {OrderId}", id);
+
+                // First check if this is an archived order
+                var archiveHistory = await _context.ArchiveHistories
+                    .FirstOrDefaultAsync(h => h.OrderID == id);
+
+                if (archiveHistory != null)
+                {
+                    _logger.LogInformation("Found archive history for order {OrderId}", id);
+
+                    // Delete archive history first due to foreign key constraints
+                    _logger.LogInformation("Deleting archive history for order {OrderId}", id);
+                    await _context.Database.ExecuteSqlRawAsync(
+                        "DELETE FROM ArchiveHistories WHERE OrderID = {0}",
+                        id);
+
+                    // This is an archived order, handle deletion differently
+                    var archivedOrder = await _context.ArchivedOrders
+                        .FirstOrDefaultAsync(a => a.ArchivedOrderID == archiveHistory.ArchivedOrderID);
+
+                    if (archivedOrder != null)
+                    {
+                        _logger.LogInformation("Deleting archived order items for ArchivedOrderID {ArchivedOrderId}", archivedOrder.ArchivedOrderID);
+                        // Remove archived order items
+                        await _context.Database.ExecuteSqlRawAsync(
+                            "DELETE FROM ArchivedOrderItems WHERE ArchivedOrderID = {0}",
+                            archivedOrder.ArchivedOrderID);
+
+                        _logger.LogInformation("Deleting archived order {ArchivedOrderId}", archivedOrder.ArchivedOrderID);
+                        // Remove the archived order
+                        await _context.Database.ExecuteSqlRawAsync(
+                            "DELETE FROM ArchivedOrders WHERE ArchivedOrderID = {0}",
+                            archivedOrder.ArchivedOrderID);
+                    }
+                }
+
+                // Delete order items and order regardless of archive status
+                _logger.LogInformation("Deleting order items for order {OrderId}", id);
+                await _context.Database.ExecuteSqlRawAsync(
+                    "DELETE FROM OrderItems WHERE OrderID = {0}",
+                    id);
+
+                _logger.LogInformation("Deleting order {OrderId}", id);
+                await _context.Database.ExecuteSqlRawAsync(
+                    "DELETE FROM Orders WHERE OrderID = {0}",
+                    id);
+
+                await transaction.CommitAsync();
+                _logger.LogInformation("Successfully deleted order {OrderId} and all related records", id);
+                return Json(new { success = true, message = "Order deleted successfully" });
+            }
+            catch (DbUpdateException ex)
+            {
+                await transaction.RollbackAsync();
+                _logger.LogError(ex, "Database error while deleting order {OrderId}: {Message}", id, ex.Message);
+                return Json(new { success = false, message = "Database error while deleting order. Please try again." });
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                _logger.LogError(ex, "Error deleting order {OrderId}: {Message}", id, ex.Message);
+                return Json(new { success = false, message = "Error deleting order. Please try again." });
+            }
+        }
     }
 }

@@ -17,64 +17,74 @@
     }
 
     // Filter options click event
-    filterOptions.forEach(option => {
-        option.addEventListener('click', function () {
-            const parentSection = this.closest('.filter-section');
-            parentSection.querySelectorAll('.filter-option').forEach(opt => {
-                opt.classList.remove('active');
+    if (filterOptions.length > 0) {
+        filterOptions.forEach(option => {
+            option.addEventListener('click', function () {
+                const parentSection = this.closest('.filter-section');
+                parentSection.querySelectorAll('.filter-option').forEach(opt => {
+                    opt.classList.remove('active');
+                });
+                this.classList.add('active');
+                filterOrders();
             });
-            this.classList.add('active');
-            filterOrders();
         });
-    });
+    }
 
     // Dropdown functionality
-    dropdowns.forEach(dropdown => {
-        dropdown.addEventListener('click', function(e) {
-            e.stopPropagation();
-            const content = this.nextElementSibling;
+    if (dropdowns.length > 0) {
+        dropdowns.forEach(dropdown => {
+            dropdown.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const content = this.nextElementSibling;
+                if (content && content.classList.contains('dropdown-content')) {
+                    // Close all other dropdowns
+                    document.querySelectorAll('.dropdown-content.show').forEach(d => {
+                        if (d !== content) d.classList.remove('show');
+                    });
+                    content.classList.toggle('show');
+                }
+            });
+
+            // Handle dropdown item selection
+            const content = dropdown.nextElementSibling;
             if (content && content.classList.contains('dropdown-content')) {
-                // Close all other dropdowns
-                document.querySelectorAll('.dropdown-content.show').forEach(d => {
-                    if (d !== content) d.classList.remove('show');
+                content.querySelectorAll('a').forEach(item => {
+                    item.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        const selectedValue = this.textContent.trim();
+                        const selectedData = this.dataset[dropdown.dataset.type] || selectedValue;
+                        dropdown.textContent = selectedValue;
+                        dropdown.dataset.selected = selectedData;
+                        content.classList.remove('show');
+                        filterOrders();
+                    });
                 });
-                content.classList.toggle('show');
             }
         });
-
-        // Handle dropdown item selection
-        const content = dropdown.nextElementSibling;
-        if (content && content.classList.contains('dropdown-content')) {
-            content.querySelectorAll('a').forEach(item => {
-                item.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    const selectedValue = this.textContent.trim();
-                    const selectedData = this.dataset[dropdown.dataset.type] || selectedValue;
-                    dropdown.textContent = selectedValue;
-                    dropdown.dataset.selected = selectedData;
-                    content.classList.remove('show');
-                    filterOrders();
-                });
-            });
-        }
-    });
+    }
 
     // Date range functionality
-    dateInputs.forEach(input => {
-        input.addEventListener('change', function() {
-            filterOrders();
+    if (dateInputs.length > 0) {
+        dateInputs.forEach(input => {
+            input.addEventListener('change', function() {
+                filterOrders();
+            });
         });
-    });
+    }
 
     // Range inputs functionality
-    rangeInputs.forEach(input => {
-        input.addEventListener('input', debounce(function() {
-            filterOrders();
-        }, 300));
-    });
+    if (rangeInputs.length > 0) {
+        rangeInputs.forEach(input => {
+            input.addEventListener('input', debounce(function() {
+                filterOrders();
+            }, 300));
+        });
+    }
 
     // Function to filter orders
     function filterOrders() {
+        if (!searchInput || !orderCards.length) return;
+
         const searchTerm = searchInput.value.toLowerCase();
         const activeStatus = document.querySelector('.filter-option.active')?.dataset.status;
         const selectedSource = document.querySelector('.dropdown[data-type="source"]')?.textContent.trim();
@@ -83,8 +93,8 @@
         const orderDateTo = document.getElementById('orderDateTo')?.value;
 
         orderCards.forEach(card => {
-            const orderId = card.querySelector('.order-id').textContent.toLowerCase();
-            const orderDesc = card.querySelector('.order-description').textContent.toLowerCase();
+            const orderId = card.querySelector('.order-id')?.textContent.toLowerCase();
+            const orderDesc = card.querySelector('.order-description')?.textContent.toLowerCase();
             const orderStatus = card.querySelector('.order-status')?.textContent;
             const orderSource = card.dataset.source;
             const orderLocation = card.dataset.location;
@@ -93,7 +103,7 @@
             let show = true;
 
             // Search filter
-            if (searchTerm && !orderId.includes(searchTerm) && !orderDesc.includes(searchTerm)) {
+            if (searchTerm && orderId && orderDesc && !orderId.includes(searchTerm) && !orderDesc.includes(searchTerm)) {
                 show = false;
             }
 
@@ -136,6 +146,8 @@
 
     // Function to update order counts in filter badges
     function updateOrderCounts() {
+        if (!orderCards.length) return;
+
         const statuses = ['all', 'quote', 'sample', 'shipment', 'fulfilled'];
         statuses.forEach(status => {
             const count = Array.from(orderCards).filter(card => {
@@ -149,45 +161,49 @@
     }
 
     // Reset filters button click event
-    resetFiltersButton.addEventListener('click', function () {
-        // Reset filter options
-        filterOptions.forEach(option => {
-            option.classList.remove('active');
+    if (resetFiltersButton) {
+        resetFiltersButton.addEventListener('click', function () {
+            // Reset filter options
+            filterOptions.forEach(option => {
+                option.classList.remove('active');
+            });
+            // Set "All" as active
+            const allOption = document.querySelector('.filter-option[data-status="all"]');
+            if (allOption) {
+                allOption.classList.add('active');
+            }
+
+            // Reset dropdowns
+            dropdowns.forEach(dropdown => {
+                dropdown.textContent = dropdown.getAttribute('data-placeholder') || 'Select...';
+                dropdown.removeAttribute('data-selected');
+            });
+
+            // Reset date inputs
+            const dateFrom = document.getElementById('orderDateFrom');
+            const dateTo = document.getElementById('orderDateTo');
+            if (dateFrom) dateFrom.value = '';
+            if (dateTo) dateTo.value = '';
+
+            // Reset search input
+            if (searchInput) {
+                searchInput.value = '';
+            }
+
+            // Close any open dropdowns
+            document.querySelectorAll('.dropdown-content.show').forEach(dropdown => {
+                dropdown.classList.remove('show');
+            });
+
+            // Show all order cards
+            orderCards.forEach(card => {
+                card.style.display = 'block';
+            });
+
+            // Update order counts
+            updateOrderCounts();
         });
-        // Set "All" as active
-        const allOption = document.querySelector('.filter-option[data-status="all"]');
-        if (allOption) {
-            allOption.classList.add('active');
-        }
-
-        // Reset dropdowns
-        dropdowns.forEach(dropdown => {
-            dropdown.textContent = dropdown.getAttribute('data-placeholder') || 'Select...';
-            dropdown.removeAttribute('data-selected');
-        });
-
-        // Reset date inputs
-        document.getElementById('orderDateFrom').value = '';
-        document.getElementById('orderDateTo').value = '';
-
-        // Reset search input
-        if (searchInput) {
-            searchInput.value = '';
-        }
-
-        // Close any open dropdowns
-        document.querySelectorAll('.dropdown-content.show').forEach(dropdown => {
-            dropdown.classList.remove('show');
-        });
-
-        // Show all order cards
-        orderCards.forEach(card => {
-            card.style.display = 'block';
-        });
-
-        // Update order counts
-        updateOrderCounts();
-    });
+    }
 
     // Close dropdowns when clicking outside
     document.addEventListener('click', function(e) {
@@ -199,14 +215,15 @@
     });
 
     // Search functionality
-    searchInput.addEventListener('input', debounce(function () {
-        filterOrders();
-    }, 300));
+    if (searchInput) {
+        searchInput.addEventListener('input', debounce(function () {
+            filterOrders();
+        }, 300));
+    }
 
     // Handle Add New Order button
-    const addNewOrderBtn = document.getElementById('addNewOrder');
-    if (addNewOrderBtn) {
-        addNewOrderBtn.addEventListener('click', function(e) {
+    if (addNewOrderButton) {
+        addNewOrderButton.addEventListener('click', function(e) {
             e.preventDefault();
             window.location.href = '/Orders/RecordPayment';
         });
@@ -214,40 +231,16 @@
 
     // Order buttons click events
     const orderButtons = document.querySelectorAll('.order-button');
-    orderButtons.forEach(button => {
-        button.addEventListener('click', function () {
-            const action = this.textContent.toLowerCase();
-            const orderId = this.closest('.order-card').dataset.orderId;
-            
-            if (action === 'paid' || action === 'unpaid') {
-                handlePaymentStatus(orderId, action);
-            }
-        });
-    });
-
-    // Function to handle payment status
-    function handlePaymentStatus(orderId, status) {
-        fetch(`/Orders/UpdatePaymentStatus/${orderId}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ status: status })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                const orderCard = document.querySelector(`[data-order-id="${orderId}"]`);
-                const button = orderCard.querySelector('.order-button');
-                button.textContent = status === 'paid' ? 'Paid' : 'Unpaid';
-                button.className = `order-button ${status === 'paid' ? 'primary' : 'secondary'}`;
-            } else {
-                alert(data.message || 'Error updating payment status');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Error updating payment status');
+    if (orderButtons.length > 0) {
+        orderButtons.forEach(button => {
+            button.addEventListener('click', function () {
+                const action = this.textContent.toLowerCase();
+                const orderId = this.closest('.order-card').dataset.orderId;
+                
+                if (action === 'paid' || action === 'unpaid') {
+                    handlePaymentStatus(orderId, action);
+                }
+            });
         });
     }
 
