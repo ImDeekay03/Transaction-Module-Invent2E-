@@ -9,6 +9,12 @@
     const dropdowns = document.querySelectorAll('.dropdown');
     const dateInputs = document.querySelectorAll('input[type="date"]');
     const rangeInputs = document.querySelectorAll('.range-inputs input');
+    const modal = document.getElementById('orderDetailsModal');
+
+    // Ensure modal is hidden by default
+    if (modal) {
+        modal.classList.remove('show');
+    }
 
     // Filter options click event
     filterOptions.forEach(option => {
@@ -43,7 +49,9 @@
                 item.addEventListener('click', function(e) {
                     e.preventDefault();
                     const selectedValue = this.textContent.trim();
+                    const selectedData = this.dataset[dropdown.dataset.type] || selectedValue;
                     dropdown.textContent = selectedValue;
+                    dropdown.dataset.selected = selectedData;
                     content.classList.remove('show');
                     filterOrders();
                 });
@@ -68,33 +76,18 @@
     // Function to filter orders
     function filterOrders() {
         const searchTerm = searchInput.value.toLowerCase();
-        const activeStatus = document.querySelector('.filter-option.active')?.textContent.split(' ')[0].toLowerCase();
+        const activeStatus = document.querySelector('.filter-option.active')?.dataset.status;
         const selectedSource = document.querySelector('.dropdown[data-type="source"]')?.textContent.trim();
         const selectedLocation = document.querySelector('.dropdown[data-type="location"]')?.textContent.trim();
-        const minValue = document.querySelector('input[data-type="min"]')?.value;
-        const maxValue = document.querySelector('input[data-type="max"]')?.value;
-        const orderDateFrom = document.querySelector('input[data-type="orderDateFrom"]')?.value;
-        const orderDateTo = document.querySelector('input[data-type="orderDateTo"]')?.value;
-
-        // If no filters are active, show all orders
-        if (!searchTerm && !activeStatus && 
-            (!selectedSource || selectedSource === 'Select Order Source') && 
-            (!selectedLocation || selectedLocation === 'Select Location') && 
-            !minValue && !maxValue && !orderDateFrom && !orderDateTo) {
-            orderCards.forEach(card => {
-                card.style.display = 'block';
-            });
-            updateOrderCounts();
-            return;
-        }
+        const orderDateFrom = document.getElementById('orderDateFrom')?.value;
+        const orderDateTo = document.getElementById('orderDateTo')?.value;
 
         orderCards.forEach(card => {
-            const orderId = card.dataset.orderId.toLowerCase();
+            const orderId = card.querySelector('.order-id').textContent.toLowerCase();
             const orderDesc = card.querySelector('.order-description').textContent.toLowerCase();
-            const orderStatus = card.querySelector('.order-status')?.textContent.toLowerCase() || '';
-            const orderSource = card.dataset.source?.toLowerCase();
-            const orderLocation = card.dataset.location?.toLowerCase();
-            const orderValue = parseFloat(card.dataset.value || '0');
+            const orderStatus = card.querySelector('.order-status')?.textContent;
+            const orderSource = card.dataset.source;
+            const orderLocation = card.dataset.location;
             const orderDate = new Date(card.dataset.orderDate);
 
             let show = true;
@@ -105,38 +98,31 @@
             }
 
             // Status filter
-            if (activeStatus && activeStatus !== 'all' && !orderStatus.includes(activeStatus)) {
+            if (activeStatus && activeStatus !== 'all' && orderStatus !== activeStatus) {
                 show = false;
             }
 
             // Source filter
-            if (selectedSource && selectedSource !== 'Select Order Source' && orderSource !== selectedSource.toLowerCase()) {
+            if (selectedSource && selectedSource !== 'Select Order Source' && orderSource !== selectedSource) {
                 show = false;
             }
 
             // Location filter
-            if (selectedLocation && selectedLocation !== 'Select Location' && orderLocation !== selectedLocation.toLowerCase()) {
-                show = false;
-            }
-
-            // Value range filter
-            if (minValue && orderValue < parseFloat(minValue)) {
-                show = false;
-            }
-            if (maxValue && orderValue > parseFloat(maxValue)) {
+            if (selectedLocation && selectedLocation !== 'Select Location' && orderLocation !== selectedLocation) {
                 show = false;
             }
 
             // Date range filter
             if (orderDateFrom) {
                 const fromDate = new Date(orderDateFrom);
+                fromDate.setHours(0, 0, 0, 0);
                 if (orderDate < fromDate) {
                     show = false;
                 }
             }
             if (orderDateTo) {
                 const toDate = new Date(orderDateTo);
-                toDate.setHours(23, 59, 59, 999); // End of the day
+                toDate.setHours(23, 59, 59, 999);
                 if (orderDate > toDate) {
                     show = false;
                 }
@@ -169,26 +155,20 @@
             option.classList.remove('active');
         });
         // Set "All" as active
-        const allOption = document.querySelector('.filter-option:first-child');
+        const allOption = document.querySelector('.filter-option[data-status="all"]');
         if (allOption) {
             allOption.classList.add('active');
         }
 
         // Reset dropdowns
         dropdowns.forEach(dropdown => {
-            const placeholder = dropdown.getAttribute('data-placeholder') || 'Select...';
-            dropdown.textContent = placeholder;
-        });
-
-        // Reset range inputs
-        rangeInputs.forEach(input => {
-            input.value = '';
+            dropdown.textContent = dropdown.getAttribute('data-placeholder') || 'Select...';
+            dropdown.removeAttribute('data-selected');
         });
 
         // Reset date inputs
-        dateInputs.forEach(input => {
-            input.value = '';
-        });
+        document.getElementById('orderDateFrom').value = '';
+        document.getElementById('orderDateTo').value = '';
 
         // Reset search input
         if (searchInput) {
@@ -280,9 +260,18 @@
             const actionsMenu = document.createElement('div');
             actionsMenu.className = 'actions-menu';
             actionsMenu.innerHTML = `
-                <div class="action-item" data-action="edit">Edit Order</div>
-                <div class="action-item" data-action="delete">Delete Order</div>
-                <div class="action-item" data-action="details">View Details</div>
+                <div class="action-item" data-action="edit-details">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z"/>
+                    </svg>
+                    Update Order
+                </div>
+                <div class="action-item" data-action="archive">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M0 2a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1v7.5a2.5 2.5 0 0 1-2.5 2.5h-9A2.5 2.5 0 0 1 1 12.5V5a1 1 0 0 1-1-1V2zm2 3v7.5A1.5 1.5 0 0 0 3.5 14h9a1.5 1.5 0 0 0 1.5-1.5V5H2zm13-3H1v2h14V2zM5 7.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5z"/>
+                    </svg>
+                    Archive Order
+                </div>
             `;
 
             const existingMenus = document.querySelectorAll('.actions-menu');
@@ -296,7 +285,11 @@
             actionsMenu.querySelectorAll('.action-item').forEach(item => {
                 item.addEventListener('click', function() {
                     const action = this.dataset.action;
-                    handleOrderAction(orderId, action);
+                    if (action === 'edit-details') {
+                        showOrderDetails(orderId);
+                    } else if (action === 'archive') {
+                        archiveOrder(orderId);
+                    }
                     actionsMenu.remove();
                 });
             });
@@ -311,36 +304,49 @@
         });
     });
 
-    // Function to handle order actions
-    function handleOrderAction(orderId, action) {
-        switch(action) {
-            case 'edit':
-                window.location.href = `/Orders/Edit/${orderId}`;
-                break;
-            case 'delete':
-                if (confirm('Are you sure you want to delete this order?')) {
-                    fetch(`/Orders/Delete/${orderId}`, {
-                        method: 'POST'
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            const orderCard = document.querySelector(`[data-order-id="${orderId}"]`);
-                            orderCard.remove();
-                            updateOrderCounts();
-                        } else {
-                            alert(data.message || 'Error deleting order');
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        alert('Error deleting order');
-                    });
+    // Function to handle order archiving
+    function archiveOrder(orderId) {
+        if (confirm('Are you sure you want to archive this order?')) {
+            fetch(`/Orders/ArchiveOrder/${orderId}`, { 
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
                 }
-                break;
-            case 'details':
-                window.location.href = `/Orders/Details/${orderId}`;
-                break;
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const orderCard = document.querySelector(`[data-order-id="${orderId}"]`);
+                    if (orderCard) {
+                        orderCard.remove();
+                    }
+                    // Show success message
+                    const successMessage = document.createElement('div');
+                    successMessage.className = 'alert alert-success';
+                    successMessage.innerHTML = `
+                        <div>
+                            <i class="fas fa-check-circle"></i>
+                            Order has been archived successfully
+                        </div>
+                        <button type="button" class="btn-close" onclick="this.parentElement.style.display='none'">×</button>
+                    `;
+                    document.querySelector('.orders-container').insertBefore(successMessage, document.querySelector('.orders-container').firstChild);
+                    
+                    // Auto-hide success message after 3 seconds
+                    setTimeout(() => {
+                        successMessage.style.opacity = '0';
+                        setTimeout(() => {
+                            successMessage.remove();
+                        }, 300);
+                    }, 3000);
+                } else {
+                    alert('Error archiving order');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error archiving order');
+            });
         }
     }
 
@@ -370,4 +376,41 @@
 
     // Initialize
     filterOrders();
+});
+
+function showOrderDetails(orderId) {
+    fetch(`/Orders/GetOrderDetails/${orderId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const order = data.order;
+                document.getElementById('orderId').value = order.orderID;
+                document.getElementById('orderStatus').value = order.status;
+                document.getElementById('trackingProvider').value = order.trackingProvider || '';
+                document.getElementById('trackingNumber').value = order.trackingNumber || '';
+                document.getElementById('progressPercentage').value = order.progressPercentage;
+                
+                const modal = document.getElementById('orderDetailsModal');
+                modal.classList.add('show');
+            } else {
+                alert('Error loading order details');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error loading order details');
+        });
+}
+
+function closeOrderDetails() {
+    const modal = document.getElementById('orderDetailsModal');
+    modal.classList.remove('show');
+}
+
+// Add click outside to close
+document.addEventListener('click', function(e) {
+    const modal = document.getElementById('orderDetailsModal');
+    if (e.target === modal) {
+        closeOrderDetails();
+    }
 });
