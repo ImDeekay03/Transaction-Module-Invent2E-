@@ -89,10 +89,14 @@
 
     function printInvoice() {
         const popup = document.getElementById('invoicePopup');
-        const originalDisplay = popup.style.display;
-        popup.style.display = 'block';
+        
+        // Show the popup if it's hidden
+        if (popup.style.display === 'none') {
+            popup.style.display = 'flex';
+        }
+        
+        // Print
         window.print();
-        popup.style.display = originalDisplay;
     }
 
     function showInvoicePopup(orderId) {

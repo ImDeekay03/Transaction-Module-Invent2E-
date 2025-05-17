@@ -421,8 +421,20 @@ main {
 }
 
 .order-price {
+    font-size: 1.1rem;
     font-weight: 600;
-    color: var(--primary);
+    color: #00df72;
+    margin-bottom: 0.5rem;
+}
+
+.payment-details {
+    font-size: 0.9rem;
+    color: #b0b8bb;
+    margin-top: 0.25rem;
+}
+
+.payment-details div {
+    margin-top: 0.1rem;
 }
 
 .order-description {

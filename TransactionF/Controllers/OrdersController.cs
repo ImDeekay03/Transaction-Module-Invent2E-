@@ -325,7 +325,8 @@ namespace TransactionF.Controllers
                         totalPrice = oi.TotalPrice
                     }),
                     subtotal = order.OrderItems.Sum(oi => oi.TotalPrice),
-                    totalAmount = order.OrderItems.Sum(oi => oi.TotalPrice)
+                    totalAmount = order.OrderItems.Sum(oi => oi.TotalPrice),
+                    paymentAmount = order.PaymentAmount
                 };
 
                 return Json(new { success = true, invoice });

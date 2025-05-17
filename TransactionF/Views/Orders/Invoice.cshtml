@@ -76,6 +76,17 @@
                             <td colspan="3" class="subtotal">Total Amount</td>
                             <td>₱@Model.TotalAmount.ToString("N2")</td>
                         </tr>
+                        @if (Model.PaymentMethod == "Cash")
+                        {
+                            <tr class="payment-row">
+                                <td colspan="3" class="subtotal">Amount Paid</td>
+                                <td>₱@Model.PaymentAmount.ToString("N2")</td>
+                            </tr>
+                            <tr class="change-row">
+                                <td colspan="3" class="subtotal">Change</td>
+                                <td>₱@((Model.PaymentAmount - Model.TotalAmount).ToString("N2"))</td>
+                            </tr>
+                        }
                     </tbody>
                 </table>
             </div>

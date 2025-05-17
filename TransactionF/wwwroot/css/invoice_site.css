@@ -83,36 +83,44 @@ body {
 .invoice-table {
     width: 100%;
     border-collapse: collapse;
-    margin-bottom: 20px;
-    background-color: #1a1d21;
-    color: white;
-    border-radius: 6px;
-    overflow: hidden;
+    margin: 1.5rem 0;
 }
 
-    .invoice-table th {
-        text-align: left;
-        padding: 12px;
-        background-color: #121416;
-        font-weight: 500;
-        font-size: 13px;
-    }
+.invoice-table th,
+.invoice-table td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid #2e414d;
+}
 
-    .invoice-table td {
-        padding: 12px;
-        font-size: 13px;
-    }
+.invoice-table th {
+    font-weight: 600;
+    color: #b0b8bb;
+}
 
-    .invoice-table .subtotal {
-        text-align: right;
-        padding: 12px;
-        font-weight: 500;
-    }
+.subtotal-row {
+    border-top: 1px solid #2e414d;
+}
 
-    .invoice-table .total-row {
-        font-weight: 600;
-        font-size: 14px;
-    }
+.total-row {
+    border-top: 2px solid #2e414d;
+    font-weight: bold;
+}
+
+.payment-row {
+    border-top: 1px solid #2e414d;
+    color: #00df72;
+}
+
+.change-row {
+    border-top: 1px solid #2e414d;
+    color: #00df72;
+}
+
+.subtotal {
+    text-align: right;
+    padding-right: 1rem;
+}
 
 .actions {
     display: flex;
