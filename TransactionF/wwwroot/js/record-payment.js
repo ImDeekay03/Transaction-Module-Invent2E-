@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const form = document.getElementById('paymentForm');
     const productSelect = document.getElementById('productSelect');
     const productQty = document.getElementById('productQty');
@@ -12,30 +12,77 @@ document.addEventListener('DOMContentLoaded', function() {
     const referenceNumber = document.getElementById('referenceNumber');
     const orderItemsJson = document.getElementById('orderItemsJson');
     const orderTotalInput = document.querySelector('input[name="OrderTotal"]');
+    const cashPaymentGroup = document.getElementById('cashPaymentGroup');
+    const paymentAmount = document.getElementById('paymentAmount');
+    const changeAmount = document.getElementById('changeAmount');
+    const insufficientAmount = document.getElementById('insufficientAmount');
 
     let orderItems = [];
 
     // Toggle payment fields based on payment status
-    isPaidSelect.addEventListener('change', function() {
+    isPaidSelect.addEventListener('change', function () {
         if (this.value === 'true') {
             paymentMethodGroup.style.display = 'block';
         } else {
             paymentMethodGroup.style.display = 'none';
             referenceNumberGroup.style.display = 'none';
+            cashPaymentGroup.style.display = 'none';
+            changeAmount.style.display = 'none';
+            insufficientAmount.style.display = 'none';
         }
     });
 
     // Toggle reference number field based on payment method
-    paymentMethodSelect.addEventListener('change', function() {
+    paymentMethodSelect.addEventListener('change', function () {
         if (this.value === 'GCash' || this.value === 'Maya' || this.value === 'Bank') {
             referenceNumberGroup.style.display = 'block';
+            cashPaymentGroup.style.display = 'none';
+            changeAmount.style.display = 'none';
+            insufficientAmount.style.display = 'none';
+        } else if (this.value === 'Cash') {
+            referenceNumberGroup.style.display = 'none';
+            cashPaymentGroup.style.display = 'block';
+            // Trigger validation on payment method change
+            validatePaymentAmount();
         } else {
             referenceNumberGroup.style.display = 'none';
+            cashPaymentGroup.style.display = 'none';
+            changeAmount.style.display = 'none';
+            insufficientAmount.style.display = 'none';
         }
     });
 
+    // Validate payment amount and show appropriate messages
+    function validatePaymentAmount() {
+        const total = parseFloat(orderTotalInput.value) || 0;
+        const paid = parseFloat(paymentAmount.value) || 0;
+        
+        // Hide both messages initially
+        changeAmount.style.display = 'none';
+        insufficientAmount.style.display = 'none';
+        
+        if (paid > total) {
+            const change = paid - total;
+            changeAmount.textContent = `Change: ₱${change.toFixed(2)}`;
+            changeAmount.style.display = 'block';
+            paymentAmount.classList.remove('is-invalid');
+            paymentAmount.classList.add('is-valid');
+        } else if (paid > 0 && paid < total) {
+            const remaining = total - paid;
+            insufficientAmount.textContent = `Insufficient amount. Remaining: ₱${remaining.toFixed(2)}`;
+            insufficientAmount.style.display = 'block';
+            paymentAmount.classList.remove('is-valid');
+            paymentAmount.classList.add('is-invalid');
+        } else {
+            paymentAmount.classList.remove('is-valid', 'is-invalid');
+        }
+    }
+
+    // Calculate and display change for cash payments
+    paymentAmount.addEventListener('input', validatePaymentAmount);
+
     // Add product to order
-    addProductBtn.addEventListener('click', function() {
+    addProductBtn.addEventListener('click', function () {
         const selectedOption = productSelect.options[productSelect.selectedIndex];
         if (!selectedOption.value) {
             alert('Please select a product');
@@ -113,8 +160,14 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Form submission
-    form.addEventListener('submit', function(e) {
+    form.addEventListener('submit', function (e) {
         e.preventDefault();
+
+        // Prevent submission for unpaid orders
+        if (isPaidSelect.value === 'false') {
+            alert('Cannot submit an unpaid order. Please mark the order as paid and provide payment details.');
+            return;
+        }
 
         // Validate required fields
         const requiredFields = form.querySelectorAll('[required]');
@@ -123,14 +176,18 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!field.value.trim()) {
                 isValid = false;
                 field.classList.add('is-invalid');
-                const labelText = field.previousElementSibling ? 
-                    field.previousElementSibling.textContent : 
+                const labelText = field.previousElementSibling ?
+                    field.previousElementSibling.textContent :
                     field.getAttribute('name') || 'this field';
                 alert(`Please fill in ${labelText}`);
             } else {
                 field.classList.remove('is-invalid');
             }
         });
+
+        if (!isValid) {
+            return; // Stop form submission if required fields are missing
+        }
 
         // Check if products have been added
         if (orderItems.length === 0) {
@@ -144,11 +201,22 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
+        // Validate cash payment amount
+        if (paymentMethodSelect.value === 'Cash') {
+            const total = parseFloat(orderTotalInput.value) || 0;
+            const paid = parseFloat(paymentAmount.value) || 0;
+            
+            if (paid < total) {
+                alert('Amount paid must be equal to or greater than the order total');
+                return;
+            }
+        }
+
         // Validate reference number for specific payment methods
-        if (isPaidSelect.value === 'true' && 
-            (paymentMethodSelect.value === 'GCash' || 
-             paymentMethodSelect.value === 'Maya' || 
-             paymentMethodSelect.value === 'Bank') && 
+        if (isPaidSelect.value === 'true' &&
+            (paymentMethodSelect.value === 'GCash' ||
+                paymentMethodSelect.value === 'Maya' ||
+                paymentMethodSelect.value === 'Bank') &&
             !referenceNumber.value.trim()) {
             alert('Please enter a reference number');
             return;
@@ -177,11 +245,65 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Set payment date if order is paid
             if (isPaidSelect.value === 'true') {
-                const paymentDateInput = document.createElement('input');
-                paymentDateInput.type = 'hidden';
-                paymentDateInput.name = 'PaymentDate';
+                // Add payment date
+                let paymentDateInput = document.querySelector('input[name="PaymentDate"]');
+                if (!paymentDateInput) {
+                    paymentDateInput = document.createElement('input');
+                    paymentDateInput.type = 'hidden';
+                    paymentDateInput.name = 'PaymentDate';
+                    form.appendChild(paymentDateInput);
+                }
                 paymentDateInput.value = new Date().toISOString();
-                form.appendChild(paymentDateInput);
+
+                // Add payment amount for cash payments, use actual payment amount entered
+                let paymentAmountInput = document.querySelector('input[name="PaymentAmount"]');
+                if (!paymentAmountInput) {
+                    paymentAmountInput = document.createElement('input');
+                    paymentAmountInput.type = 'hidden';
+                    paymentAmountInput.name = 'PaymentAmount';
+                    form.appendChild(paymentAmountInput);
+                }
+                
+                if (paymentMethodSelect.value === 'Cash') {
+                    paymentAmountInput.value = document.getElementById('paymentAmount').value;
+                } else {
+                    paymentAmountInput.value = orderTotalInput.value;
+                }
+
+                // Add reference number
+                let referenceNumberInput = document.querySelector('input[name="ReferenceNumber"]');
+                if (!referenceNumberInput) {
+                    referenceNumberInput = document.createElement('input');
+                    referenceNumberInput.type = 'hidden';
+                    referenceNumberInput.name = 'ReferenceNumber';
+                    form.appendChild(referenceNumberInput);
+                }
+                
+                if (paymentMethodSelect.value === 'Cash') {
+                    referenceNumberInput.value = 'CASH-' + new Date().getTime();
+                } else {
+                    referenceNumberInput.value = referenceNumber.value;
+                }
+
+                // Add payment method
+                let paymentMethodInput = document.querySelector('input[name="PaymentMethod"]');
+                if (!paymentMethodInput) {
+                    paymentMethodInput = document.createElement('input');
+                    paymentMethodInput.type = 'hidden';
+                    paymentMethodInput.name = 'PaymentMethod';
+                    form.appendChild(paymentMethodInput);
+                }
+                paymentMethodInput.value = paymentMethodSelect.value;
+
+                // Add IsPaid field
+                let isPaidInput = document.querySelector('input[name="IsPaid"]');
+                if (!isPaidInput) {
+                    isPaidInput = document.createElement('input');
+                    isPaidInput.type = 'hidden';
+                    isPaidInput.name = 'IsPaid';
+                    form.appendChild(isPaidInput);
+                }
+                isPaidInput.value = 'true';
             }
 
             // Combine address fields
@@ -194,18 +316,26 @@ document.addEventListener('DOMContentLoaded', function() {
             const shippingAddress = `${houseNo} ${streetAddress}, ${barangay}, ${city} ${postalId}`;
             
             // Add shipping address to form
-            const shippingAddressInput = document.createElement('input');
-            shippingAddressInput.type = 'hidden';
-            shippingAddressInput.name = 'ShippingAddress';
+            let shippingAddressInput = document.querySelector('input[name="ShippingAddress"]');
+            if (!shippingAddressInput) {
+                shippingAddressInput = document.createElement('input');
+                shippingAddressInput.type = 'hidden';
+                shippingAddressInput.name = 'ShippingAddress';
+                form.appendChild(shippingAddressInput);
+            }
             shippingAddressInput.value = shippingAddress;
-            form.appendChild(shippingAddressInput);
 
             // Log the data before submission
             console.log('Form data being submitted:', {
                 orderItems: orderItemsData,
                 isPaid: isPaidSelect.value,
                 paymentMethod: paymentMethodSelect.value,
-                referenceNumber: referenceNumber.value,
+                paymentAmount: paymentMethodSelect.value === 'Cash' ? 
+                    document.getElementById('paymentAmount').value : 
+                    orderTotalInput.value,
+                referenceNumber: paymentMethodSelect.value === 'Cash' ? 
+                    'CASH-' + new Date().getTime() : 
+                    referenceNumber.value,
                 total: orderTotalInput.value,
                 shippingAddress: shippingAddress
             });

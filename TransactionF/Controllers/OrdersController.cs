@@ -33,7 +33,7 @@ namespace TransactionF.Controllers
         /// Displays the list of orders with filtering options.
         /// Integration Point: Filters can be extended to use data from other modules.
         /// </summary>
-        public IActionResult Index(string searchString, string status, string orderSource, string location, 
+        public IActionResult Index(string searchString, string status, string orderSource, string location,
             DateTime? orderDateFrom, DateTime? orderDateTo, decimal? minOrderValue, decimal? maxOrderValue)
         {
             // Set ViewBag properties for filter values
@@ -55,7 +55,7 @@ namespace TransactionF.Controllers
 
             if (!string.IsNullOrEmpty(searchString))
             {
-                filteredOrders = filteredOrders.Where(o => 
+                filteredOrders = filteredOrders.Where(o =>
                     o.OrderID.ToString().Contains(searchString) ||
                     o.CustomerID.ToString().Contains(searchString) ||
                     o.ShippingAddress.Contains(searchString));
@@ -165,10 +165,10 @@ namespace TransactionF.Controllers
             try
             {
                 _logger.LogInformation("Starting RecordPayment POST action");
-                
+
                 if (!ModelState.IsValid)
                 {
-                    _logger.LogWarning("ModelState is invalid: {errors}", 
+                    _logger.LogWarning("ModelState is invalid: {errors}",
                         string.Join(", ", ModelState.Values
                             .SelectMany(v => v.Errors)
                             .Select(e => e.ErrorMessage)));
@@ -198,7 +198,7 @@ namespace TransactionF.Controllers
 
                 _context.Orders.Add(order);
                 _logger.LogInformation("Database context state: {state}", _context.ChangeTracker.DebugView.LongView);
-                
+
                 var result = await _context.SaveChangesAsync();
                 _logger.LogInformation("SaveChangesAsync completed with {result} changes", result);
 
@@ -319,7 +319,7 @@ namespace TransactionF.Controllers
                     status = order.Status,
                     items = order.OrderItems.Select(oi => new
                     {
-                        productName = oi.Product.ProductName,
+                        productName = oi.Product?.ProductName ?? "Unknown Product",
                         quantity = oi.Quantity,
                         unitPrice = oi.UnitPrice,
                         totalPrice = oi.TotalPrice
@@ -352,9 +352,11 @@ namespace TransactionF.Controllers
                     return Json(new { success = false, message = "Order not found" });
                 }
 
-                return Json(new { 
-                    success = true, 
-                    order = new {
+                return Json(new
+                {
+                    success = true,
+                    order = new
+                    {
                         orderID = order.OrderID,
                         status = order.Status,
                         trackingProvider = order.TrackingProvider,
@@ -370,7 +372,7 @@ namespace TransactionF.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> UpdateOrder(int id, [FromForm] string status, [FromForm] string trackingProvider, 
+        public async Task<IActionResult> UpdateOrder(int id, [FromForm] string status, [FromForm] string trackingProvider,
             [FromForm] string trackingNumber, [FromForm] int progressPercentage)
         {
             try
@@ -495,7 +497,7 @@ namespace TransactionF.Controllers
 
                 if (!string.IsNullOrEmpty(searchString))
                 {
-                    query = query.Where(h => 
+                    query = query.Where(h =>
                         h.OrderID.ToString().Contains(searchString) ||
                         h.ArchivedOrderID.ToString().Contains(searchString) ||
                         h.ArchiveReason.Contains(searchString));
@@ -542,4 +544,3 @@ namespace TransactionF.Controllers
         }
     }
 }
-

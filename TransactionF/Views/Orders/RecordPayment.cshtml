@@ -325,6 +325,14 @@
                     <span asp-validation-for="PaymentMethod" class="field-validation-error"></span>
                 </div>
 
+                <div class="order-form-group" id="cashPaymentGroup" style="display: none;">
+                    <label asp-for="PaymentAmount">Amount Paid (Cash)</label>
+                    <input type="number" asp-for="PaymentAmount" id="paymentAmount" step="0.01" min="0" />
+                    <div id="changeAmount" class="field-validation-error" style="display: none; margin-top: 0.5rem; color: #00df72;"></div>
+                    <div id="insufficientAmount" class="field-validation-error" style="display: none; margin-top: 0.5rem; color: #ff6b6b;"></div>
+                    <span asp-validation-for="PaymentAmount" class="field-validation-error"></span>
+                </div>
+
                 <div class="order-form-group" id="referenceNumberGroup" style="display: none;">
                     <label asp-for="ReferenceNumber">Reference Number</label>
                     <input type="text" asp-for="ReferenceNumber" id="referenceNumber" />

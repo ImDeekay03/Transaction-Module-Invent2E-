@@ -62,6 +62,14 @@
                             <td colspan="3" class="subtotal">Total Amount</td>
                             <td id="popupTotalAmount"></td>
                         </tr>
+                        <tr id="paymentAmountRow" style="display: none;">
+                            <td colspan="3" class="subtotal">Amount Paid</td>
+                            <td id="popupPaymentAmount"></td>
+                        </tr>
+                        <tr id="changeAmountRow" style="display: none;">
+                            <td colspan="3" class="subtotal">Change</td>
+                            <td id="popupChangeAmount"></td>
+                        </tr>
                     </tfoot>
                 </table>
             </div>
@@ -118,6 +126,21 @@
                     // Populate totals
                     document.getElementById('popupSubtotal').textContent = `₱${invoice.subtotal.toFixed(2)}`;
                     document.getElementById('popupTotalAmount').textContent = `₱${invoice.totalAmount.toFixed(2)}`;
+                    
+                    // Show payment amount and change if payment method is Cash
+                    const paymentAmountRow = document.getElementById('paymentAmountRow');
+                    const changeAmountRow = document.getElementById('changeAmountRow');
+                    
+                    if (invoice.paymentMethod === 'Cash' && invoice.paymentAmount) {
+                        paymentAmountRow.style.display = '';
+                        changeAmountRow.style.display = '';
+                        document.getElementById('popupPaymentAmount').textContent = `₱${invoice.paymentAmount.toFixed(2)}`;
+                        const change = invoice.paymentAmount - invoice.totalAmount;
+                        document.getElementById('popupChangeAmount').textContent = `₱${change.toFixed(2)}`;
+                    } else {
+                        paymentAmountRow.style.display = 'none';
+                        changeAmountRow.style.display = 'none';
+                    }
                     
                     // Show popup
                     document.getElementById('invoicePopup').style.display = 'flex';
