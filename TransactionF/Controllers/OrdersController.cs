@@ -51,7 +51,10 @@ namespace TransactionF.Controllers
             ViewBag.Locations = new[] { "Manila", "Quezon City", "Makati", "Pasig", "Taguig" };
 
             // Apply filters
-            var filteredOrders = _context.Orders.AsQueryable();
+            var filteredOrders = _context.Orders
+                .Include(o => o.OrderItems)
+                .ThenInclude(oi => oi.Product)
+                .AsQueryable();
 
             if (!string.IsNullOrEmpty(searchString))
             {
@@ -195,6 +198,9 @@ namespace TransactionF.Controllers
                 var postal = Request.Form["PostalId"].ToString();
                 var city = Request.Form["City"].ToString();
                 order.ShippingAddress = $"{houseNo} {street}, {barangay}, {city}, {postal}";
+
+                // Set customer name from form
+                order.CustomerName = Request.Form["CustomerName"].ToString();
 
                 _context.Orders.Add(order);
                 _logger.LogInformation("Database context state: {state}", _context.ChangeTracker.DebugView.LongView);

@@ -22,6 +22,10 @@ namespace TransactionF.Models
         public int CustomerID { get; set; } // Integration Point: Maps to Customers module's Customer ID
 
         [Required]
+        [StringLength(100)]
+        public string CustomerName { get; set; } // Integration Point: Maps to Customers module's Customer Name
+
+        [Required]
         [StringLength(200)]
         public string ShippingAddress { get; set; } // Integration Point: Should be populated from Customers module
 
@@ -98,6 +102,7 @@ namespace TransactionF.Models
             ReferenceNumber = "";
             TrackingNumber = "";
             TrackingProvider = "";
+            CustomerName = ""; // Initialize CustomerName
         }
 
         public ArchivedOrder ToArchivedOrder(string reason)
